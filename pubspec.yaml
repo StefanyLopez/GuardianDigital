@@ -1,0 +1,65 @@
+name: guardian
+description: Guardian Digital Kids - Acompañamiento digital empático
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Base de datos remota y autenticación
+  supabase_flutter: ^2.5.0
+
+  # Base de datos local (historial de chat privado)
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+
+  # Estado global
+  flutter_riverpod: ^2.5.1
+
+  # Navegación
+  go_router: ^13.2.0
+
+  # Llamadas HTTP (Groq API)
+  http: ^1.2.1
+
+  # Notificaciones push locales
+  flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.4
+
+  # Animaciones
+  flutter_animate: ^4.5.0
+
+  # Almacenamiento seguro
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.3
+
+  # UI
+  google_fonts: ^6.2.1
+  gap: ^3.0.1
+
+  # Variables de entorno
+  flutter_dotenv: ^5.1.0
+
+  # Utilidades
+  intl: ^0.19.0
+  uuid: ^4.4.0
+  timeago: ^3.6.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.9
+  riverpod_generator: ^2.4.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/images/
+    - assets/animations/
+    - assets/fonts/
