@@ -38,7 +38,7 @@ Antes de instalar nada, verifica que tu PC cumple con esto:
 
 ### 1.1 Descargar el SDK
 
-1. Ve a [https://docs.flutter.dev/get-started/install/windows/mobile](https://docs.flutter.dev/get-started/install/windows/mobile)
+1. Ve a [https://docs.flutter.dev/get-started/install/windows/mobile](https://docs.flutter.dev/install/manual)
 2. Haz clic en **"Download Flutter SDK"** y descarga el archivo `.zip`
 3. **Importante:** extrae el ZIP en `C:\Users\TU_USUARIO\dev\flutter`
    - La ruta final debe quedar así: `C:\Users\TU_USUARIO\dev\flutter\bin\flutter.bat`
@@ -79,15 +79,7 @@ Deberías ver algo así. Los únicos `✓` que necesitas para este proyecto son 
 
 ---
 
-## Parte 2 — Instalar VS Code
-
-### 2.1 Descargar e instalar
-
-1. Ve a [https://code.visualstudio.com](https://code.visualstudio.com)
-2. Descarga e instala la versión para Windows
-3. Abre VS Code
-
-### 2.2 Instalar la extensión de Flutter
+## Parte 2 — Instalar extensión de Flutter VS Code
 
 1. Presiona `Ctrl + Shift + X` para abrir el panel de extensiones
 2. Busca **"Flutter"** (la oficial de Dart Code)
@@ -184,7 +176,7 @@ En Windows Explorer puede que no te deje crear archivos que empiecen con punto. 
 Copia este contenido en tu `.env` y llena los valores:
 
 ```env
-# Supabase — pídele a Stef el SUPABASE_URL y el SUPABASE_ANON_KEY
+# Supabase — tu equipo debe tener el SUPABASE_URL y el SUPABASE_ANON_KEY
 # Son los mismos para todo el equipo porque es el mismo proyecto
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_ANON_KEY=eyJ...
@@ -263,13 +255,12 @@ Una vez que la app está corriendo, cada vez que guardas un archivo (`Ctrl + S`)
 ```
 guardian_digital/
 ├── .env                          ← tus keys (NO subir a GitHub)
-├── .env.example                  ← plantilla del .env
 ├── pubspec.yaml                  ← dependencias
 ├── supabase_setup.sql            ← script para crear las tablas
 ├── assets/
-│   ├── images/                   ← avatares e imágenes (ya creada)
-│   ├── animations/               ← archivos Lottie (ya creada)
-│   └── fonts/                    ← tipografías custom (ya creada)
+│   ├── images/                   ← avatares e imágenes
+│   ├── animations/               ← archivos Lottie
+│   └── fonts/                    ← tipografías custom
 └── lib/
     ├── main.dart                 ← entrada de la app
     ├── core/
