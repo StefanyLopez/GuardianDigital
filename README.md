@@ -456,4 +456,4 @@ mkdir assets\images assets\animations assets\fonts
 ## Equipo
 
 Anjhi Bonilla · Daniel Colmenares · Nicolás Hurtado · Stefany López  
-Universidad Militar Nueva Granada · Ingeniería Multimedia · 2025
+Universidad Militar Nueva Granada · Ingeniería Multimedia · 2026
