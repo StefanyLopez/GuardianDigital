@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
@@ -30,10 +29,14 @@ class GuardianHomeScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push(AppRoutes.familySettings),
+            tooltip: 'Configuración',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout_rounded),
             onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).logout();
-              if (context.mounted) context.go(AppRoutes.login);
+              // TODO: Implement logout
             },
           ),
         ],
@@ -77,6 +80,13 @@ class GuardianHomeScreen extends ConsumerWidget {
                 ).animate().fadeIn(delay: 400.ms),
 
               const Gap(GDSpacing.md),
+
+              
+              ElevatedButton.icon(
+                onPressed: () => context.push(AppRoutes.newProfile),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Agregar perfil'),
+              ).animate().fadeIn(delay: 350.ms),
 
               // Demo panel
               TextButton.icon(
@@ -187,6 +197,14 @@ class _ProfileCard extends ConsumerWidget {
                   ),
                 ),
                 const Icon(Icons.chevron_right_rounded, color: GDColors.textTertiary),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: GDColors.textTertiary),
+                  onPressed: () {
+                    // Poner el perfil como activo para que el form lo lea
+                    ref.read(activeProfileProvider.notifier).state = profile;
+                    context.push(AppRoutes.editProfile(profile.id));
+                  },
+                ),
               ],
             ),
             const Gap(GDSpacing.md),

@@ -338,3 +338,70 @@ ThemeData buildGDTheme() {
     ),
   );
 }
+
+// ─────────────────────────────────────────────
+//  TEMA OSCURO
+// ─────────────────────────────────────────────
+ThemeData buildGDDarkTheme() {
+  return ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: GDColors.primary,
+      brightness: Brightness.dark,
+      background: const Color(0xFF0F0F1A),
+      surface: const Color(0xFF1A1A2E),
+    ),
+    scaffoldBackgroundColor: const Color(0xFF0F0F1A),
+    textTheme: GoogleFonts.nunitoTextTheme(ThemeData.dark().textTheme),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF0F0F1A),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      titleTextStyle: GDTypography.headlineMedium.copyWith(
+        color: Colors.white,
+      ),
+      iconTheme: const IconThemeData(color: Colors.white),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: GDColors.primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: GDRadius.lgAll),
+        elevation: 0,
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFF1E1E30),
+      border: OutlineInputBorder(
+        borderRadius: GDRadius.lgAll,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: GDRadius.lgAll,
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: GDRadius.lgAll,
+        borderSide: const BorderSide(color: GDColors.primary, width: 2),
+      ),
+      hintStyle: const TextStyle(color: Color.fromARGB(255, 206, 206, 235)),
+    ),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF1A1A2E),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: GDRadius.lgAll,
+        side: BorderSide(color: GDColors.primary.withValues(alpha: 0.15)),
+      ),
+      margin: EdgeInsets.zero,
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF1A1A2E),
+      selectedItemColor: GDColors.primary,
+      unselectedItemColor: Color.fromARGB(255, 206, 206, 235),
+    ),
+  );
+}

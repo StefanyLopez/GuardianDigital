@@ -13,21 +13,18 @@ final activeProfileProvider = StateProvider<ProfileModel?>((ref) => null);
 // ─────────────────────────────────────────────
 //  LISTA DE PERFILES DE LA FAMILIA
 // ─────────────────────────────────────────────
-final familyProfilesProvider = FutureProvider<List<ProfileModel>>((ref) async {
+final familyProfilesProvider = StreamProvider<List<ProfileModel>>((ref) {
   final client = Supabase.instance.client;
-  try {
-    final userId = client.auth.currentUser?.id;
-    if (userId == null) return [];
-    final data = await client
-        .from(AppConstants.tableProfiles)
-        .select()
-        .eq('family_id', userId)
-        .order('created_at');
-    return data.map((e) => ProfileModel.fromJson(e)).toList();
-  } catch (e, stack) {
-    debugPrint('ERROR en familyProfilesProvider: $e\n$stack');
-    throw Exception('Error al conectar con la base de datos');
-  }
+  final userId = client.auth.currentUser?.id;
+  if (userId == null) return Stream.value([]);
+
+  // Supabase Realtime — escucha cambios en la tabla profiles
+  return client
+      .from(AppConstants.tableProfiles)
+      .stream(primaryKey: ['id'])
+      .eq('family_id', userId)
+      .order('created_at')
+      .map((data) => data.map((e) => ProfileModel.fromJson(e)).toList());
 });
 
 // ─────────────────────────────────────────────
@@ -36,6 +33,9 @@ final familyProfilesProvider = FutureProvider<List<ProfileModel>>((ref) async {
 // ─────────────────────────────────────────────
 final profileByIdProvider = FutureProvider.family<ProfileModel?, String>(
   (ref, profileId) async {
+    // Escucha cambios en la lista general y se refresca automáticamente
+    ref.watch(familyProfilesProvider);
+    
     final client = Supabase.instance.client;
     try {
       final data = await client
@@ -44,7 +44,6 @@ final profileByIdProvider = FutureProvider.family<ProfileModel?, String>(
           .eq('id', profileId)
           .single();
       final profile = ProfileModel.fromJson(data);
-      // Sincroniza el activeProfileProvider para el chat
       ref.read(activeProfileProvider.notifier).state = profile;
       return profile;
     } catch (e) {
@@ -125,6 +124,51 @@ class ProfileNotifier extends StateNotifier<AsyncValue<void>> {
       ref.invalidate(familyProfilesProvider);
     } catch (e) {
       debugPrint('Error actualizando autonomía: $e');
+    }
+  }
+
+  Future<void> updateProfile({
+  required String profileId,
+  required String name,
+  required String ageRange,
+  required int avatarId,
+  required List<String> goals,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      await _client
+          .from(AppConstants.tableProfiles)
+          .update({
+            'name': name,
+            'age_range': ageRange,
+            'avatar_id': avatarId,
+            'goals': goals,
+          })
+          .eq('id', profileId);
+      state = const AsyncValue.data(null);
+      // El StreamProvider se actualiza solo
+    } catch (e, st) {
+      debugPrint('Error actualizando perfil: $e');
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> deleteProfile(String profileId) async {
+    state = const AsyncValue.loading();
+    try {
+      await _client
+          .from(AppConstants.tableProfiles)
+          .delete()
+          .eq('id', profileId);
+      // Limpiar el perfil activo si era el que se borró
+      final active = ref.read(activeProfileProvider);
+      if (active?.id == profileId) {
+        ref.read(activeProfileProvider.notifier).state = null;
+      }
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      debugPrint('Error borrando perfil: $e');
+      state = AsyncValue.error(e, st);
     }
   }
 }

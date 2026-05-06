@@ -23,7 +23,7 @@ class _DemoPanelScreenState extends ConsumerState<DemoPanelScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(activeProfileProvider);
-    final screenTimeThreshold = 45.0;
+    const screenTimeThreshold = 45.0;
     final overThreshold = _screenTimeMinutes >= screenTimeThreshold;
 
     return Scaffold(
@@ -58,7 +58,7 @@ class _DemoPanelScreenState extends ConsumerState<DemoPanelScreen> {
             const Gap(GDSpacing.lg),
 
             // Perfil activo
-            _SectionTitle(title: '👤 Perfil activo'),
+            const _SectionTitle(title: '👤 Perfil activo'),
             const Gap(GDSpacing.sm),
             Container(
               padding: const EdgeInsets.all(GDSpacing.md),
@@ -80,7 +80,7 @@ class _DemoPanelScreenState extends ConsumerState<DemoPanelScreen> {
             const Gap(GDSpacing.lg),
 
             // ── TRIGGER 1: Tiempo en pantalla
-            _SectionTitle(title: '📱 Trigger 1 — Tiempo en pantalla'),
+            const _SectionTitle(title: '📱 Trigger 1 — Tiempo en pantalla'),
             const Gap(GDSpacing.sm),
             Text(
               'Simula minutos de uso: ${_screenTimeMinutes.round()} min ${overThreshold ? "⚠️ Umbral superado" : ""}',
@@ -132,7 +132,7 @@ class _DemoPanelScreenState extends ConsumerState<DemoPanelScreen> {
             const Gap(GDSpacing.lg),
 
             // ── TRIGGER 3: Uso nocturno
-            _SectionTitle(title: '🌙 Trigger 3 — Uso nocturno'),
+            const _SectionTitle(title: '🌙 Trigger 3 — Uso nocturno'),
             const Gap(GDSpacing.sm),
             Text(
               'Simula que el usuario usó el celular después de las 10pm.',
@@ -163,7 +163,7 @@ class _DemoPanelScreenState extends ConsumerState<DemoPanelScreen> {
             const Gap(GDSpacing.lg),
 
             // ── TRIGGER 5: Inactividad
-            _SectionTitle(title: '😴 Trigger 5 — Inactividad 48h'),
+            const _SectionTitle(title: '😴 Trigger 5 — Inactividad 48h'),
             const Gap(GDSpacing.sm),
             Text(
               'Simula que el usuario no abrió la app en 2 días.',
@@ -186,7 +186,7 @@ class _DemoPanelScreenState extends ConsumerState<DemoPanelScreen> {
             const Gap(GDSpacing.lg),
 
             // ── Avanzar día
-            _SectionTitle(title: '📅 Simular avance de tiempo'),
+            const _SectionTitle(title: '📅 Simular avance de tiempo'),
             const Gap(GDSpacing.sm),
             Text('Incrementa la racha del perfil activo en 1 día.',
               style: GDTypography.bodyMedium),
@@ -208,7 +208,7 @@ class _DemoPanelScreenState extends ConsumerState<DemoPanelScreen> {
             const Gap(GDSpacing.lg),
 
             // ── Limpiar chat
-            _SectionTitle(title: '🗑️ Utilidades'),
+            const _SectionTitle(title: '🗑️ Utilidades'),
             const Gap(GDSpacing.sm),
             OutlinedButton.icon(
               onPressed: () async {
