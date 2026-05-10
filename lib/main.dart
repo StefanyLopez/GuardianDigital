@@ -9,6 +9,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/theme/theme_provider.dart';
+import 'core/theme/theme_extension.dart';
 
 // ─────────────────────────────────────────────
 //  ENTRY POINT

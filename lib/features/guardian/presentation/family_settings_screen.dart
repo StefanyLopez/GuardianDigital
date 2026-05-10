@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../../core/theme/theme_extension.dart';
 
 class FamilySettingsScreen extends ConsumerWidget {
   const FamilySettingsScreen({super.key});
@@ -28,7 +29,7 @@ class FamilySettingsScreen extends ConsumerWidget {
               color: Theme.of(context).cardTheme.color,
               borderRadius: GDRadius.lgAll,
               border: Border.all(
-                color: GDColors.primary.withValues(alpha: 0.12),
+                color: context.gd.primary.withValues(alpha: 0.12),
               ),
             ),
             child: SwitchListTile(
@@ -39,10 +40,10 @@ class FamilySettingsScreen extends ConsumerWidget {
               ),
               secondary: Icon(
                 isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                color: GDColors.primary,
+                color: context.gd.primary,
               ),
               value: isDark,
-              activeColor: GDColors.primary,
+              activeColor: context.gd.primary,
               onChanged: (_) =>
                   ref.read(themeModeProvider.notifier).toggle(),
             ),
@@ -58,11 +59,11 @@ class FamilySettingsScreen extends ConsumerWidget {
               color: Theme.of(context).cardTheme.color,
               borderRadius: GDRadius.lgAll,
               border: Border.all(
-                color: GDColors.primary.withValues(alpha: 0.12),
+                color: context.gd.primary.withValues(alpha: 0.12),
               ),
             ),
             child: ListTile(
-              leading: const Icon(Icons.info_outline, color: GDColors.primary),
+              leading: Icon(Icons.info_outline, color: context.gd.primary),
               title: Text('Versión', style: GDTypography.titleLarge),
               trailing: Text('1.0.0 MVP', style: GDTypography.bodySmall),
             ),

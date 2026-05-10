@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/router/app_router.dart';
+import '../../core/theme/theme_extension.dart';
 
 // ─────────────────────────────────────────────
 //  ESTADO DEL BANNER
@@ -138,13 +139,13 @@ class _BannerContent extends ConsumerWidget {
         0,
       ),
       decoration: BoxDecoration(
-        color: GDColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: GDRadius.lgAll,
         border: Border.all(
-          color: GDColors.primary.withValues(alpha: 0.2),
+          color: context.gd.primary.withValues(alpha: 0.2),
           width: 1.5,
         ),
-        boxShadow: GDShadows.md,
+        boxShadow: context.gd.shadowMd,
       ),
       child: Padding(
         padding: const EdgeInsets.all(GDSpacing.md),
@@ -155,8 +156,8 @@ class _BannerContent extends ConsumerWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
-                gradient: GDColors.gradientPrimary,
+              decoration: BoxDecoration(
+                gradient: context.gd.gradientPrimary,
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -173,14 +174,14 @@ class _BannerContent extends ConsumerWidget {
                   Text(
                     'Luma',
                     style: GDTypography.labelLarge.copyWith(
-                      color: GDColors.primary,
+                      color: context.gd.primary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     state.message,
                     style: GDTypography.bodyMedium.copyWith(
-                      color: GDColors.textPrimary,
+                      color: context.gd.textPrimary,
                     ),
                   ),
                   const SizedBox(height: GDSpacing.sm),
@@ -213,10 +214,10 @@ class _BannerContent extends ConsumerWidget {
             // Cerrar
             GestureDetector(
               onTap: notifier.dismiss,
-              child: const Icon(
+              child: Icon(
                 Icons.close_rounded,
                 size: 18,
-                color: GDColors.textTertiary,
+                color: context.gd.textTertiary,
               ),
             ),
           ],
@@ -247,13 +248,13 @@ class _ActionChip extends StatelessWidget {
           vertical: GDSpacing.xs + 2,
         ),
         decoration: BoxDecoration(
-          color: isPrimary ? GDColors.primary : GDColors.surfaceVariant,
+          color: isPrimary ? context.gd.primary : context.gd.surfaceVariant,
           borderRadius: GDRadius.fullAll,
         ),
         child: Text(
           label,
           style: GDTypography.labelSmall.copyWith(
-            color: isPrimary ? Colors.white : GDColors.textSecondary,
+            color: isPrimary ? Colors.white : context.gd.textSecondary,
             fontSize: 12,
           ),
         ),

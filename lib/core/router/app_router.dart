@@ -56,6 +56,8 @@ class AppRoutes {
 //  ROUTER PROVIDER — sin build_runner, sin @riverpod
 // ─────────────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authStateProvider);
+
   return GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,

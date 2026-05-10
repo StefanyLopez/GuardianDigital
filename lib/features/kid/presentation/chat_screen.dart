@@ -9,6 +9,7 @@ import '../../../core/constants/app_constants.dart';
 import '../models/chat_message.dart';
 import '../providers/chat_provider.dart';
 import '../providers/profile_provider.dart';
+import '../../../core/theme/theme_extension.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -78,7 +79,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                gradient: GDColors.gradientPrimary,
+                gradient: context.gd.gradientPrimary,
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -94,8 +95,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   chatState.isNpcTyping ? 'escribiendo...' : 'tu compañero digital',
                   style: GDTypography.bodySmall.copyWith(
                     color: chatState.isNpcTyping
-                        ? GDColors.primary
-                        : GDColors.textTertiary,
+                        ? context.gd.primary
+                        : context.gd.textTertiary,
                   ),
                 ),
               ],
@@ -166,7 +167,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: GDColors.error),
+              leading: Icon(Icons.delete_outline, color: context.gd.error),
               title: const Text('Limpiar conversación'),
               onTap: () {
                 Navigator.pop(context);
@@ -208,7 +209,7 @@ class _MessageBubble extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                gradient: GDColors.gradientPrimary,
+                gradient: context.gd.gradientPrimary,
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -225,7 +226,7 @@ class _MessageBubble extends StatelessWidget {
                 vertical: GDSpacing.sm + 2,
               ),
               decoration: BoxDecoration(
-                color: isUser ? GDColors.primary : GDColors.npcBubble,
+                color: isUser ? context.gd.primary : context.gd.npcBubble,
                 borderRadius:
                     isUser ? GDRadius.userBubble : GDRadius.npcBubble,
               ),
@@ -271,7 +272,7 @@ class _TypingIndicator extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              gradient: GDColors.gradientPrimary,
+              gradient: context.gd.gradientPrimary,
               shape: BoxShape.circle,
             ),
             child: const Center(
@@ -282,7 +283,7 @@ class _TypingIndicator extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: GDColors.npcBubble,
+              color: context.gd.npcBubble,
               borderRadius: GDRadius.npcBubble,
             ),
             child: Row(
@@ -291,8 +292,8 @@ class _TypingIndicator extends StatelessWidget {
                   width: 7,
                   height: 7,
                   margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: const BoxDecoration(
-                    color: GDColors.primary,
+                  decoration: BoxDecoration(
+                    color: context.gd.primary,
                     shape: BoxShape.circle,
                   ),
                 )
@@ -347,10 +348,10 @@ class _QuickReplies extends StatelessWidget {
               vertical: GDSpacing.xs,
             ),
             decoration: BoxDecoration(
-              color: GDColors.surfaceVariant,
+              color: context.gd.surfaceVariant,
               borderRadius: GDRadius.fullAll,
               border: Border.all(
-                  color: GDColors.primary.withValues(alpha: 0.2)),
+                  color: context.gd.primary.withValues(alpha: 0.2)),
             ),
             child: Text(_replies[i], style: GDTypography.bodyMedium),
           ),
@@ -388,10 +389,10 @@ class _ChatInput extends StatelessWidget {
         GDSpacing.sm + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
-        color: GDColors.surface,
+        color: context.gd.surface,
         border: Border(
           top: BorderSide(
-            color: GDColors.primary.withValues(alpha: 0.08),
+            color: context.gd.primary.withValues(alpha: 0.08),
             width: 1,
           ),
         ),
@@ -417,7 +418,7 @@ class _ChatInput extends StatelessWidget {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: GDColors.surfaceVariant,
+                fillColor: context.gd.surfaceVariant,
               ),
             ),
           ),
@@ -428,8 +429,8 @@ class _ChatInput extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: hasText && !isLoading
-                  ? GDColors.primary
-                  : GDColors.surfaceVariant,
+                  ? context.gd.primary
+                  : context.gd.surfaceVariant,
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -439,7 +440,7 @@ class _ChatInput extends StatelessWidget {
                 size: 20,
                 color: hasText && !isLoading
                     ? Colors.white
-                    : GDColors.textTertiary,
+                    : context.gd.textTertiary,
               ),
             ),
           ),
@@ -471,9 +472,9 @@ class _EmptyChat extends StatelessWidget {
             style: GDTypography.bodyMedium,
           ),
           const Gap(GDSpacing.md),
-          const CircularProgressIndicator(
+          CircularProgressIndicator(
             strokeWidth: 2,
-            color: GDColors.primary,
+            color: context.gd.primary,
           ),
         ],
       ),

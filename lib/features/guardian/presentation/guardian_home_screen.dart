@@ -9,7 +9,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/router/app_router.dart';
 import '../../kid/providers/profile_provider.dart';
 import '../../kid/models/profile_model.dart';
-import '../../auth/providers/auth_provider.dart';
+import '../../../core/theme/theme_extension.dart';
 
 class GuardianHomeScreen extends ConsumerWidget {
   const GuardianHomeScreen({super.key});
@@ -42,7 +42,7 @@ class GuardianHomeScreen extends ConsumerWidget {
         ],
       ),
       body: profilesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: GDColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.gd.primary)),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (profiles) {
           if (profiles.isEmpty) {
@@ -52,7 +52,7 @@ class GuardianHomeScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(GDSpacing.lg),
             children: [
               // Aviso de privacidad
-              _buildPrivacyBanner().animate().fadeIn(),
+              _buildPrivacyBanner(context).animate().fadeIn(),
               const Gap(GDSpacing.lg),
 
               Text('Perfiles activos', style: GDTypography.headlineMedium)
@@ -101,22 +101,22 @@ class GuardianHomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPrivacyBanner() {
+  Widget _buildPrivacyBanner(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(GDSpacing.md),
       decoration: BoxDecoration(
-        color: GDColors.primaryLight,
+        color: context.gd.primaryLight,
         borderRadius: GDRadius.lgAll,
-        border: Border.all(color: GDColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: context.gd.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.shield_outlined, color: GDColors.primary, size: 20),
+          Icon(Icons.shield_outlined, color: context.gd.primary, size: 20),
           const Gap(GDSpacing.sm),
           Expanded(
             child: Text(
               'Solo ves el resumen de bienestar. Las conversaciones con Luma son privadas.',
-              style: GDTypography.bodySmall.copyWith(color: GDColors.primaryDark),
+              style: GDTypography.bodySmall.copyWith(color: context.gd.primaryDark),
             ),
           ),
         ],
@@ -137,7 +137,7 @@ class GuardianHomeScreen extends ConsumerWidget {
             const Gap(GDSpacing.sm),
             Text(
               'Crea un perfil de menor para empezar.',
-              style: GDTypography.bodyLarge.copyWith(color: GDColors.textSecondary),
+              style: GDTypography.bodyLarge.copyWith(color: context.gd.textSecondary),
               textAlign: TextAlign.center,
             ),
             const Gap(GDSpacing.xl),
@@ -164,10 +164,10 @@ class _ProfileCard extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: GDSpacing.md),
         padding: const EdgeInsets.all(GDSpacing.md),
         decoration: BoxDecoration(
-          color: GDColors.surface,
+          color: context.gd.surface,
           borderRadius: GDRadius.lgAll,
-          border: Border.all(color: GDColors.primary.withValues(alpha: 0.1)),
-          boxShadow: GDShadows.sm,
+          border: Border.all(color: context.gd.primary.withValues(alpha: 0.1)),
+          boxShadow: context.gd.shadowSm,
         ),
         child: Column(
           children: [
@@ -177,9 +177,9 @@ class _ProfileCard extends ConsumerWidget {
                 Container(
                   width: 52, height: 52,
                   decoration: BoxDecoration(
-                    color: GDColors.primaryLight,
+                    color: context.gd.primaryLight,
                     shape: BoxShape.circle,
-                    border: Border.all(color: GDColors.primary.withValues(alpha: 0.2), width: 2),
+                    border: Border.all(color: context.gd.primary.withValues(alpha: 0.2), width: 2),
                   ),
                   child: Center(child: Text(profile.avatarEmoji, style: const TextStyle(fontSize: 26))),
                 ),
@@ -196,9 +196,9 @@ class _ProfileCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: GDColors.textTertiary),
+                Icon(Icons.chevron_right_rounded, color: context.gd.textTertiary),
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 18, color: GDColors.textTertiary),
+                  icon: Icon(Icons.edit_outlined, size: 18, color: context.gd.textTertiary),
                   onPressed: () {
                     // Poner el perfil como activo para que el form lo lea
                     ref.read(activeProfileProvider.notifier).state = profile;
@@ -225,7 +225,7 @@ class _ProfileCard extends ConsumerWidget {
                   emoji: '✅',
                   label: 'Estado',
                   value: profile.streakDays > 0 ? 'Activo' : 'Sin racha',
-                  valueColor: profile.streakDays > 0 ? GDColors.success : GDColors.textTertiary,
+                  valueColor: profile.streakDays > 0 ? context.gd.success : context.gd.textTertiary,
                 )),
               ],
             ),
@@ -247,7 +247,7 @@ class _SyncStat extends StatelessWidget {
       Text(emoji, style: const TextStyle(fontSize: 18)),
       const Gap(2),
       Text(value, style: GDTypography.titleLarge.copyWith(
-        color: valueColor ?? GDColors.textPrimary, fontSize: 13)),
+        color: valueColor ?? context.gd.textPrimary, fontSize: 13)),
       Text(label, style: GDTypography.bodySmall.copyWith(fontSize: 10)),
     ]);
   }

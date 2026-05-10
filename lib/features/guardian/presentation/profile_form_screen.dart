@@ -7,6 +7,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../kid/models/profile_model.dart';
 import '../../kid/providers/profile_provider.dart';
+import '../../../core/theme/theme_extension.dart';
+
 
 // Pantalla reutilizable para crear Y editar perfiles
 // Si recibe un [profile], entra en modo edición
@@ -79,7 +81,7 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
     }
   }
 
-  Future<void> _delete() async {
+  Future<void> _delete(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -95,8 +97,8 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar',
-                style: TextStyle(color: GDColors.error)),
+            child: Text('Eliminar',
+                style: TextStyle(color: context.gd.error)),
           ),
         ],
       ),
@@ -123,8 +125,8 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
         actions: [
           if (_isEditing)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: GDColors.error),
-              onPressed: _delete,
+              icon: Icon(Icons.delete_outline, color: context.gd.error),
+              onPressed: () => _delete(context),
               tooltip: 'Eliminar perfil',
             ),
         ],
@@ -207,12 +209,12 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
                       color: _selectedAvatar == i
-                          ? GDColors.primaryLight
-                          : GDColors.surfaceVariant,
+                          ? context.gd.primaryLight
+                          : context.gd.surfaceVariant,
                       borderRadius: GDRadius.mdAll,
                       border: Border.all(
                         color: _selectedAvatar == i
-                            ? GDColors.primary
+                            ? context.gd.primary
                             : Colors.transparent,
                         width: 2,
                       ),
@@ -268,14 +270,14 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? GDColors.primaryLight
+                            ? context.gd.primaryLight
                             : isDisabled
-                                ? GDColors.surfaceVariant.withValues(alpha: 0.5)
-                                : GDColors.surfaceVariant,
+                                ? context.gd.surfaceVariant.withValues(alpha: 0.5)
+                                : context.gd.surfaceVariant,
                         borderRadius: GDRadius.fullAll,
                         border: Border.all(
                           color: isSelected
-                              ? GDColors.primary
+                              ? context.gd.primary
                               : Colors.transparent,
                           width: 1.5,
                         ),
@@ -284,10 +286,10 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
                         goal['label']!,
                         style: GDTypography.bodySmall.copyWith(
                           color: isDisabled
-                              ? GDColors.textTertiary
+                              ? context.gd.textTertiary
                               : isSelected
-                                  ? GDColors.primaryDark
-                                  : GDColors.textSecondary,
+                                  ? context.gd.primaryDark
+                                  : context.gd.textSecondary,
                         ),
                       ),
                     ),
@@ -334,14 +336,14 @@ class _AgeChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: GDSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? GDColors.primary : GDColors.surfaceVariant,
+          color: isSelected ? context.gd.primary : context.gd.surfaceVariant,
           borderRadius: GDRadius.lgAll,
         ),
         child: Center(
           child: Text(
             label,
             style: GDTypography.titleLarge.copyWith(
-              color: isSelected ? Colors.white : GDColors.textSecondary,
+              color: isSelected ? Colors.white : context.gd.textSecondary,
             ),
           ),
         ),

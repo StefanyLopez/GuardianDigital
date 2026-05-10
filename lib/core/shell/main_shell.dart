@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../theme/app_theme.dart';
 import '../router/app_router.dart';
 import '../widgets/intervention_banner.dart';
+import '../theme/theme_extension.dart';
 
 class MainShell extends ConsumerWidget {
   final Widget child;
@@ -12,19 +12,20 @@ class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.child, this.profileId});
 
   int _locationToIndex(String location) {
-    if (location.contains('/chat')) return 1;
+    if (location.contains('/chat'))         return 1;
     if (location.contains('/achievements')) return 2;
-    if (location.contains('/stats')) return 3;
+    if (location.contains('/stats'))        return 3;
     return 0;
   }
 
   void _onTap(BuildContext context, int index) {
     final pid = profileId ?? '';
+    if (pid.isEmpty) return;
     switch (index) {
       case 0: context.go(AppRoutes.kidHome(pid)); break;
-      case 1: context.go(AppRoutes.chat(pid)); break;
+      case 1: context.go(AppRoutes.chat(pid));    break;
       case 2: context.go(AppRoutes.achievements(pid)); break;
-      case 3: context.go(AppRoutes.stats(pid)); break;
+      case 3: context.go(AppRoutes.stats(pid));   break;
     }
   }
 
@@ -32,34 +33,32 @@ class MainShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
     final currentIndex = _locationToIndex(location);
+    final c = context.gd;
 
     return Scaffold(
+      backgroundColor: c.background,
       body: Stack(
         children: [
           child,
-          // Banner de intervención flotante sobre todo el contenido
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
-            left: 0,
-            right: 0,
+            left: 0, right: 0,
             child: const InterventionBanner(),
           ),
         ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: GDColors.surface,
+          color: c.bottomNavBackground,
           border: Border(
-            top: BorderSide(
-              color: GDColors.primary.withValues(alpha: 0.08),
-              width: 1,
-            ),
+            top: BorderSide(color: c.border, width: 0.5),
           ),
         ),
         child: NavigationBar(
           selectedIndex: currentIndex,
           onDestinationSelected: (i) => _onTap(context, i),
-          backgroundColor: GDColors.surface,
+          backgroundColor: c.bottomNavBackground,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: const [

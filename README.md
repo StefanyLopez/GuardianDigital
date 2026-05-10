@@ -280,6 +280,7 @@ guardian_digital/
     │   ├── widgets/              ← banner de intervención
     │   ├── shell/main_shell.dart ← bottom navigation
     │   └── constants/            ← constantes y prompts de Luma
+    │   └── luma/                 ← avatar dinámico
     └── features/
         ├── auth/                 ← login y registro
         ├── onboarding/           ← 5 pasos de configuración inicial
@@ -330,6 +331,50 @@ Mi semana (/kid/:profileId/stats)
   → Gráfico de bienestar
   → Resumen de hábitos
 ```
+---
+---
+
+## Sistema de tema 🎨
+
+Modo claro/oscuro con persistencia. Archivos en `lib/core/theme/`:
+
+- `app_theme.dart` — constantes (`GDSpacing`, `GDRadius`, `GDTypography`) + `buildGDTheme()` / `buildGDDarkTheme()`
+- `theme_extension.dart` — extensión `context.gd` para colores adaptativos
+- `theme_provider.dart` — `themeModeProvider` (Riverpod + SharedPreferences)
+
+**Uso en widgets — siempre `context.gd`, nunca valores hardcodeados:**
+
+```dart
+color: context.gd.primary       // ✅ se adapta al tema
+color: const Color(0xFF6C63FF)  // ❌ no cambia con el tema
+```
+
+**Toggle desde cualquier widget:**
+
+```dart
+ref.read(themeModeProvider.notifier).toggle();
+// o
+ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
+```
+
+> ⚠️ `context.gd` es runtime — nunca lo uses dentro de un `const`.
+
+---
+
+## Avatar Luma 🌟
+
+Personaje central dibujado en canvas (sin imágenes). Archivos en `lib/features/kid/presentation/widgets/luma/`:
+
+- `luma_state.dart` — enums, `LumaData`, `calculateLumaData()`, catálogo de cosméticos
+- `luma_colors.dart` — paleta cromática del personaje
+- `luma_painter.dart` — `CustomPainter` que dibuja blob, expresiones y accesorios
+- `luma_avatar.dart` — widget con 4 animaciones (respiración, flotación, parpadeo, partículas)
+
+**Estados** (calculados automáticamente desde el perfil): `sleeping` → `tired` → `glowing` → `excited` → `happy` → `normal`
+
+**Evoluciones:** `sprout` (nivel 1–2) · `growing` (nivel 3 o racha 3+) · `guardian` (nivel 4+, tiene halo)
+
+**Cosméticos desbloqueables con puntos:** 5 colores de cuerpo · 6 accesorios · 5 tipos de ojos
 
 ---
 

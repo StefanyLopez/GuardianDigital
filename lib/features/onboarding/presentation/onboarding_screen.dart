@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../kid/providers/profile_provider.dart';
+import '../../../core/theme/theme_extension.dart';
 
 // ─────────────────────────────────────────────
 //  ONBOARDING SCREEN — 5 pasos
@@ -174,7 +175,7 @@ class _ProgressBar extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: isActive ? GDColors.primary : GDColors.surfaceVariant,
+                color: isActive ? context.gd.primary : context.gd.surfaceVariant,
                 borderRadius: GDRadius.fullAll,
               ),
             ),
@@ -203,9 +204,9 @@ class _WelcomePage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              gradient: GDColors.gradientPrimary,
+              gradient: context.gd.gradientPrimary,
               shape: BoxShape.circle,
-              boxShadow: GDShadows.lg,
+              boxShadow: context.gd.shadowLg,
             ),
             child: const Center(
               child: Text('✨', style: TextStyle(fontSize: 56)),
@@ -228,7 +229,7 @@ class _WelcomePage extends StatelessWidget {
           Text(
             'Soy tu compañero digital.\nEstoy aquí para acompañarte, no para vigilarte.',
             style: GDTypography.bodyLarge.copyWith(
-              color: GDColors.textSecondary,
+              color: context.gd.textSecondary,
             ),
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 600.ms),
@@ -327,13 +328,13 @@ class _TypeCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(GDSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? GDColors.primaryLight : GDColors.surface,
+          color: isSelected ? context.gd.primaryLight : context.gd.surface,
           borderRadius: GDRadius.lgAll,
           border: Border.all(
-            color: isSelected ? GDColors.primary : GDColors.surfaceVariant,
+            color: isSelected ? context.gd.primary : context.gd.surfaceVariant,
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: isSelected ? GDShadows.sm : [],
+          boxShadow: isSelected ? context.gd.shadowSm : [],
         ),
         child: Row(
           children: [
@@ -349,7 +350,7 @@ class _TypeCard extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded, color: GDColors.primary),
+              Icon(Icons.check_circle_rounded, color: context.gd.primary),
           ],
         ),
       ),
@@ -389,7 +390,7 @@ class _NamePage extends StatelessWidget {
           Text(
             'Solo el nombre, nada más.',
             style: GDTypography.bodyLarge.copyWith(
-              color: GDColors.textSecondary,
+              color: context.gd.textSecondary,
             ),
           ).animate().fadeIn(delay: 100.ms),
 
@@ -502,12 +503,12 @@ class _AgeAvatarPage extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   color: selectedAvatar == i
-                      ? GDColors.primaryLight
-                      : GDColors.surfaceVariant,
+                      ? context.gd.primaryLight
+                      : context.gd.surfaceVariant,
                   borderRadius: GDRadius.lgAll,
                   border: Border.all(
                     color: selectedAvatar == i
-                        ? GDColors.primary
+                        ? context.gd.primary
                         : Colors.transparent,
                     width: 2,
                   ),
@@ -553,14 +554,14 @@ class _AgeChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: GDSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? GDColors.primary : GDColors.surfaceVariant,
+          color: isSelected ? context.gd.primary : context.gd.surfaceVariant,
           borderRadius: GDRadius.lgAll,
         ),
         child: Center(
           child: Text(
             label,
             style: GDTypography.titleLarge.copyWith(
-              color: isSelected ? Colors.white : GDColors.textSecondary,
+              color: isSelected ? Colors.white : context.gd.textSecondary,
             ),
           ),
         ),
@@ -603,7 +604,7 @@ class _GoalsPage extends StatelessWidget {
           Text(
             'Elige hasta 3. Luma te ayudará con estos.',
             style: GDTypography.bodyLarge.copyWith(
-              color: GDColors.textSecondary,
+              color: context.gd.textSecondary,
             ),
           ).animate().fadeIn(delay: 100.ms),
 
@@ -630,14 +631,14 @@ class _GoalsPage extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? GDColors.primaryLight
+                          ? context.gd.primaryLight
                           : isDisabled
-                              ? GDColors.surfaceVariant.withValues(alpha: 0.5)
-                              : GDColors.surfaceVariant,
+                              ? context.gd.surfaceVariant.withValues(alpha: 0.5)
+                              : context.gd.surfaceVariant,
                       borderRadius: GDRadius.lgAll,
                       border: Border.all(
                         color: isSelected
-                            ? GDColors.primary
+                            ? context.gd.primary
                             : Colors.transparent,
                         width: 2,
                       ),
@@ -650,13 +651,13 @@ class _GoalsPage extends StatelessWidget {
                           height: 22,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? GDColors.primary
+                                ? context.gd.primary
                                 : Colors.transparent,
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isSelected
-                                  ? GDColors.primary
-                                  : GDColors.textTertiary,
+                                  ? context.gd.primary
+                                  : context.gd.textTertiary,
                               width: 2,
                             ),
                           ),
@@ -671,8 +672,8 @@ class _GoalsPage extends StatelessWidget {
                             goal['label']!,
                             style: GDTypography.bodyLarge.copyWith(
                               color: isDisabled
-                                  ? GDColors.textTertiary
-                                  : GDColors.textPrimary,
+                                  ? context.gd.textTertiary
+                                  : context.gd.textPrimary,
                             ),
                           ),
                         ),
