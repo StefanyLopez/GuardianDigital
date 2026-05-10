@@ -1,16 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/luma/luma_state.dart';
+import '../../../core/luma/luma_avatar.dart';
 import '../models/profile_model.dart';
 import '../providers/profile_provider.dart';
 import '../providers/chat_provider.dart';
+import '../../../core/theme/theme_extension.dart';
+
 
 class KidHomeScreen extends ConsumerWidget {
   final String profileId;
@@ -21,55 +25,30 @@ class KidHomeScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileByIdProvider(profileId));
 
     return profileAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: GDColors.primary)),
-      ),
-      error: (e, _) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('😕', style: TextStyle(fontSize: 48)),
-              const Gap(GDSpacing.md),
-              Text('Error al cargar el perfil', style: GDTypography.headlineMedium),
-              const Gap(GDSpacing.sm),
-              Text('$e', style: GDTypography.bodySmall),
-              const Gap(GDSpacing.lg),
-              ElevatedButton(
-                onPressed: () => context.go(AppRoutes.login),
-                child: const Text('Volver al inicio'),
-              ),
-            ],
-          ),
-        ),
-      ),
+      loading: () => Scaffold(
+          body: Center(child: CircularProgressIndicator(color: context.gd.primary))),
+      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
       data: (profile) {
         if (profile == null) {
           return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('😕', style: TextStyle(fontSize: 48)),
-                  const Gap(GDSpacing.md),
-                  Text('Perfil no encontrado', style: GDTypography.headlineMedium),
-                  const Gap(GDSpacing.lg),
-                  ElevatedButton(
+            body: Center(child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('😕', style: TextStyle(fontSize: 48)),
+                const Gap(GDSpacing.md),
+                Text('Perfil no encontrado', style: GDTypography.headlineMedium),
+                const Gap(GDSpacing.lg),
+                ElevatedButton(
                     onPressed: () => context.go(AppRoutes.login),
-                    child: const Text('Volver al inicio'),
-                  ),
-                ],
-              ),
-            ),
+                    child: const Text('Volver')),
+              ],
+            )),
           );
         }
 
+        final lumaData = calculateLumaData(profile);
         final hour = DateTime.now().hour;
-        final greeting = hour < 12
-            ? '¡Buenos días'
-            : hour < 18
-                ? '¡Buenas tardes'
-                : '¡Buenas noches';
+        final greeting = hour < 12 ? '¡Buenos días' : hour < 18 ? '¡Buenas tardes' : '¡Buenas noches';
 
         return Scaffold(
           appBar: AppBar(
@@ -92,100 +71,65 @@ class KidHomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Gap(GDSpacing.lg),
+                  const Gap(GDSpacing.md),
 
                   // Header
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$greeting, ${profile.name}!',
-                              style: GDTypography.headlineLarge,
-                            ),
-                            Text(
-                              'Luma está aquí contigo.',
-                              style: GDTypography.bodyMedium,
-                            ),
-                          ],
-                        ),
+                  Row(children: [
+                    Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('$greeting, ${profile.name}!', style: GDTypography.headlineLarge),
+                        Text('Luma está aquí contigo.', style: GDTypography.bodyMedium),
+                      ],
+                    )),
+                    Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        color: context.gd.primaryLight, shape: BoxShape.circle,
+                        border: Border.all(color: context.gd.primary.withValues(alpha: 0.3), width: 2),
                       ),
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: GDColors.primaryLight,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: GDColors.primary.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            profile.avatarEmoji,
-                            style: const TextStyle(fontSize: 26),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ).animate().fadeIn().slideY(begin: -0.2),
+                      child: Center(child: Text(profile.avatarEmoji, style: const TextStyle(fontSize: 22))),
+                    ),
+                  ]).animate().fadeIn().slideY(begin: -0.2),
 
                   const Gap(GDSpacing.xl),
 
-                  // Tarjeta NPC
-                  _NpcCard(profile: profile, profileId: profileId)
-                      .animate()
-                      .fadeIn(delay: 200.ms)
-                      .slideY(begin: 0.2),
+                  // Luma central
+                  _LumaCentralCard(profile: profile, lumaData: lumaData)
+                      .animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.9, 0.9)),
 
                   const Gap(GDSpacing.lg),
 
-                  // Racha
                   _StreakCard(streak: profile.streakDays)
-                      .animate()
-                      .fadeIn(delay: 300.ms)
-                      .slideY(begin: 0.2),
+                      .animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
 
                   const Gap(GDSpacing.lg),
 
-                  // Autonomía
+                  _LumaPointsCard(points: profile.lumaPoints)
+                      .animate().fadeIn(delay: 380.ms).slideY(begin: 0.2),
+
+                  const Gap(GDSpacing.lg),
+
                   _AutonomyCard(level: profile.autonomyLevel)
-                      .animate()
-                      .fadeIn(delay: 400.ms)
-                      .slideY(begin: 0.2),
+                      .animate().fadeIn(delay: 450.ms).slideY(begin: 0.2),
 
                   const Gap(GDSpacing.lg),
 
                   Text('Accesos rápidos', style: GDTypography.titleLarge)
-                      .animate()
-                      .fadeIn(delay: 500.ms),
-
+                      .animate().fadeIn(delay: 500.ms),
                   const Gap(GDSpacing.md),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickCard(
-                          emoji: '🏆',
-                          label: 'Mis logros',
-                          color: GDColors.gold,
-                          onTap: () => context.go(AppRoutes.achievements(profileId)),
-                        ),
-                      ),
-                      const Gap(GDSpacing.md),
-                      Expanded(
-                        child: _QuickCard(
-                          emoji: '📊',
-                          label: 'Mi semana',
-                          color: GDColors.secondary,
-                          onTap: () => context.go(AppRoutes.stats(profileId)),
-                        ),
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 600.ms),
+                  Row(children: [
+                    Expanded(child: _QuickCard(
+                      emoji: '🏆', label: 'Mis logros', color: context.gd.gold,
+                      onTap: () => context.go(AppRoutes.achievements(profileId)),
+                    )),
+                    const Gap(GDSpacing.md),
+                    Expanded(child: _QuickCard(
+                      emoji: '📊', label: 'Mi semana', color: context.gd.secondary,
+                      onTap: () => context.go(AppRoutes.stats(profileId)),
+                    )),
+                  ]).animate().fadeIn(delay: 600.ms),
 
                   const Gap(GDSpacing.xxl),
                 ],
@@ -198,105 +142,49 @@ class KidHomeScreen extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-//  TARJETA NPC
-// ─────────────────────────────────────────────
-class _NpcCard extends ConsumerWidget {
+class _LumaCentralCard extends ConsumerWidget {
   final ProfileModel profile;
-  final String profileId;
-  const _NpcCard({required this.profile, required this.profileId});
-
-  String _getNpcMessage(int streakDays) {
-    if (streakDays == 0) return '¿Listo para empezar? Cuéntame cómo estás.';
-    if (streakDays < 3) return '¡Llevas $streakDays día(s)! Buen comienzo.';
-    if (streakDays < 7) return '¡$streakDays días seguidos! Estás en racha 🔥';
-    return '¡$streakDays días! Eso es compromiso de verdad.';
-  }
+  final LumaData lumaData;
+  const _LumaCentralCard({required this.profile, required this.lumaData});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () {
         ref.read(chatNotifierProvider.notifier).initialize();
-        context.go(AppRoutes.chat(profileId));
+        context.go(AppRoutes.chat(profile.id));
       },
       child: Container(
-        padding: const EdgeInsets.all(GDSpacing.lg),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: GDSpacing.xl, horizontal: GDSpacing.lg),
         decoration: BoxDecoration(
-          gradient: GDColors.gradientPrimary,
+          gradient: context.gd.gradientPrimary,
           borderRadius: GDRadius.xlAll,
-          boxShadow: GDShadows.lg,
+          boxShadow: context.gd.shadowLg,
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Text('✨', style: TextStyle(fontSize: 32)),
-              ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scaleXY(
-                  begin: 1.0,
-                  end: 1.06,
-                  duration: 2000.ms,
-                  curve: Curves.easeInOut,
-                ),
-            const Gap(GDSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppConstants.npcName,
-                    style: GDTypography.titleLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Gap(4),
-                  Text(
-                    _getNpcMessage(profile.streakDays),
-                    style: GDTypography.bodyMedium.copyWith(
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  const Gap(GDSpacing.sm),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GDSpacing.md,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: GDRadius.fullAll,
-                    ),
-                    child: Text(
-                      'Hablar con Luma →',
-                      style: GDTypography.labelSmall.copyWith(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        child: Column(children: [
+          LumaAvatar(lumaData: lumaData, onTap: () {
+            ref.read(chatNotifierProvider.notifier).initialize();
+            context.go(AppRoutes.chat(profile.id));
+          }),
+          const Gap(GDSpacing.md),
+          LumaStatusBanner(lumaData: lumaData),
+          const Gap(GDSpacing.lg),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: GDSpacing.lg, vertical: GDSpacing.sm + 2),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.20),
+              borderRadius: GDRadius.fullAll,
             ),
-          ],
-        ),
+            child: Text('Hablar con Luma →',
+                style: GDTypography.labelLarge.copyWith(color: Colors.white, fontSize: 15)),
+          ),
+        ]),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-//  TARJETA DE RACHA
-// ─────────────────────────────────────────────
 class _StreakCard extends StatelessWidget {
   final int streak;
   const _StreakCard({required this.streak});
@@ -306,50 +194,51 @@ class _StreakCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(GDSpacing.md),
       decoration: BoxDecoration(
-        color: GDColors.streakLight,
-        borderRadius: GDRadius.lgAll,
-        border: Border.all(color: GDColors.streak.withValues(alpha: 0.2)),
+        color: context.gd.streakLight, borderRadius: GDRadius.lgAll,
+        border: Border.all(color: context.gd.streak.withValues(alpha: 0.2)),
       ),
-      child: Row(
-        children: [
-          Text(streak > 0 ? '🔥' : '💤', style: const TextStyle(fontSize: 36))
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scaleXY(
-                begin: 1.0,
-                end: streak > 0 ? 1.15 : 1.0,
-                duration: 800.ms,
-              ),
-          const Gap(GDSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  streak > 0 ? '$streak días seguidos' : 'Sin racha activa',
-                  style: GDTypography.headlineMedium.copyWith(
-                    color: GDColors.streak,
-                  ),
-                ),
-                Text(
-                  streak > 0
-                      ? '¡Sigue así, vas genial!'
-                      : 'Abre la app mañana para empezar',
-                  style: GDTypography.bodySmall.copyWith(
-                    color: GDColors.streak.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      child: Row(children: [
+        Text(streak > 0 ? '🔥' : '💤', style: const TextStyle(fontSize: 36))
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .scaleXY(begin: 1.0, end: streak > 0 ? 1.15 : 1.0, duration: 800.ms),
+        const Gap(GDSpacing.md),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(streak > 0 ? '$streak días seguidos' : 'Sin racha activa',
+              style: GDTypography.headlineMedium.copyWith(color: context.gd.streak)),
+          Text(streak > 0 ? '¡Sigue así, vas genial!' : 'Abre la app mañana para empezar',
+              style: GDTypography.bodySmall.copyWith(color: context.gd.streak.withValues(alpha: 0.8))),
+        ])),
+      ]),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-//  TARJETA DE AUTONOMÍA
-// ─────────────────────────────────────────────
+class _LumaPointsCard extends StatelessWidget {
+  final int points;
+  const _LumaPointsCard({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(GDSpacing.md),
+      decoration: BoxDecoration(
+        color: context.gd.successLight, borderRadius: GDRadius.lgAll,
+        border: Border.all(color: context.gd.success.withValues(alpha: 0.2)),
+      ),
+      child: Row(children: [
+        const Text('⭐', style: TextStyle(fontSize: 32)),
+        const Gap(GDSpacing.md),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('$points puntos', style: GDTypography.headlineMedium.copyWith(color: context.gd.success)),
+          Text('Completa retos para personalizar a Luma',
+              style: GDTypography.bodySmall.copyWith(color: context.gd.success.withValues(alpha: 0.8))),
+        ])),
+        Icon(Icons.chevron_right_rounded, color: context.gd.success.withValues(alpha: 0.6)),
+      ]),
+    );
+  }
+}
+
 class _AutonomyCard extends StatelessWidget {
   final int level;
   const _AutonomyCard({required this.level});
@@ -358,77 +247,46 @@ class _AutonomyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = AppConstants.autonomyLevelLabels[level - 1];
     final emoji = AppConstants.autonomyLevelEmojis[level - 1];
-
     return Container(
       padding: const EdgeInsets.all(GDSpacing.md),
       decoration: BoxDecoration(
-        color: GDColors.surface,
-        borderRadius: GDRadius.lgAll,
-        border: Border.all(color: GDColors.primary.withValues(alpha: 0.12)),
-        boxShadow: GDShadows.sm,
+        color: Theme.of(context).colorScheme.surface, borderRadius: GDRadius.lgAll,
+        border: Border.all(color: context.gd.primary.withValues(alpha: 0.12)),
+        boxShadow: context.gd.shadowSm,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 22)),
-              const Gap(GDSpacing.sm),
-              Text('Nivel de autonomía', style: GDTypography.titleLarge),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: GDSpacing.sm, vertical: 4),
-                decoration: BoxDecoration(
-                  color: GDColors.primaryLight,
-                  borderRadius: GDRadius.fullAll,
-                ),
-                child: Text(
-                  '$level / 5',
-                  style: GDTypography.labelSmall.copyWith(
-                    color: GDColors.primary,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
-          ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(emoji, style: const TextStyle(fontSize: 22)),
           const Gap(GDSpacing.sm),
-          Text(
-            label,
-            style: GDTypography.bodyMedium.copyWith(color: GDColors.primary),
+          Text('Nivel de autonomía', style: GDTypography.titleLarge),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: GDSpacing.sm, vertical: 4),
+            decoration: BoxDecoration(color: context.gd.primaryLight, borderRadius: GDRadius.fullAll),
+            child: Text('$level / 5', style: GDTypography.labelSmall.copyWith(color: context.gd.primary, fontSize: 11)),
           ),
-          const Gap(GDSpacing.sm),
-          ClipRRect(
-            borderRadius: GDRadius.fullAll,
-            child: LinearProgressIndicator(
-              value: level / 5.0,
-              minHeight: 8,
-              backgroundColor: GDColors.primaryLight,
-              valueColor: const AlwaysStoppedAnimation<Color>(GDColors.primary),
-            ),
+        ]),
+        const Gap(GDSpacing.sm),
+        Text(label, style: GDTypography.bodyMedium.copyWith(color: context.gd.primary)),
+         Gap(GDSpacing.sm),
+        ClipRRect(
+          borderRadius: GDRadius.fullAll,
+          child: LinearProgressIndicator(
+            value: level / 5.0, minHeight: 8,
+            backgroundColor: context.gd.primaryLight,
+            valueColor: AlwaysStoppedAnimation<Color>(context.gd.primary),
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-//  TARJETA DE ACCESO RÁPIDO
-// ─────────────────────────────────────────────
 class _QuickCard extends StatelessWidget {
-  final String emoji;
-  final String label;
+  final String emoji, label;
   final Color color;
   final VoidCallback onTap;
-
-  const _QuickCard({
-    required this.emoji,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+  const _QuickCard({required this.emoji, required this.label, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -437,18 +295,14 @@ class _QuickCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(GDSpacing.md),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: GDRadius.lgAll,
+          color: color.withValues(alpha: 0.1), borderRadius: GDRadius.lgAll,
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
-            const Gap(GDSpacing.sm),
-            Text(label, style: GDTypography.titleLarge),
-          ],
-        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(emoji, style: const TextStyle(fontSize: 28)),
+          const Gap(GDSpacing.sm),
+          Text(label, style: GDTypography.titleLarge),
+        ]),
       ),
     );
   }

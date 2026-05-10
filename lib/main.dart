@@ -8,6 +8,8 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/theme/theme_provider.dart';
+import 'core/theme/theme_extension.dart';
 
 // ─────────────────────────────────────────────
 //  ENTRY POINT
@@ -52,16 +54,18 @@ class GuardianDigitalApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider); 
 
     return MaterialApp.router(
       title: 'Guardian Digital',
       debugShowCheckedModeBanner: false,
       theme: buildGDTheme(),
+      darkTheme: buildGDDarkTheme(), 
+      themeMode: themeMode,          
       routerConfig: router,
       builder: (context, child) {
-        // Escala de texto fija — no se afecta por accesibilidad del SO
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
           child: child!,
         );
       },

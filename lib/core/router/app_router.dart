@@ -16,6 +16,8 @@ import '../../features/guardian/presentation/family_settings_screen.dart';
 import '../../features/demo/presentation/demo_panel_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../shell/main_shell.dart';
+import '../../features/guardian/presentation/profile_form_screen.dart';
+import '../../features/kid/providers/profile_provider.dart';
 
 // ─────────────────────────────────────────────
 //  RUTAS
@@ -44,6 +46,10 @@ class AppRoutes {
 
   // Demo
   static const demoPanel = '/demo';
+
+  static const newProfile = '/guardian/new-profile';
+  static String editProfile(String id) => '/guardian/edit-profile/$id';
+  
 }
 
 // ─────────────────────────────────────────────
@@ -92,8 +98,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Kid shell — profileId en la URL
       ShellRoute(
         builder: (context, state, child) => MainShell(
-          child: child,
           profileId: _extractProfileId(state),
+          child: child,
         ),
         routes: [
           GoRoute(
@@ -129,6 +135,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => ProfileDetailScreen(
               profileId: state.pathParameters['id']!,
             ),
+          ),
+          GoRoute(
+            path: 'new-profile',
+            builder: (_, __) => const ProfileFormScreen(),
+          ),
+          GoRoute(
+            path: 'edit-profile/:id',
+            builder: (_, state) {
+              // Necesitamos el profile — lo cargamos desde el activeProfileProvider
+              final profile = ref.read(activeProfileProvider);
+              return ProfileFormScreen(profile: profile);
+            },
           ),
           GoRoute(
             path: 'settings',

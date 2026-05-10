@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
 import '../providers/auth_provider.dart';
+import '../../../core/theme/theme_extension.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -88,7 +89,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Text(
                   'Es para toda la familia. Un solo registro.',
                   style: GDTypography.bodyLarge.copyWith(
-                    color: GDColors.textSecondary,
+                    color: context.gd.textSecondary,
                   ),
                 ).animate().fadeIn(delay: 100.ms),
 
@@ -169,20 +170,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Container(
                   padding: const EdgeInsets.all(GDSpacing.md),
                   decoration: BoxDecoration(
-                    color: GDColors.primaryLight,
+                    color: context.gd.primaryLight,
                     borderRadius: GDRadius.mdAll,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.shield_outlined,
-                          color: GDColors.primary, size: 18),
+                      Icon(Icons.shield_outlined,
+                          color: context.gd.primary, size: 18),
                       const Gap(GDSpacing.sm),
                       Expanded(
                         child: Text(
                           'Las conversaciones con Luma son privadas y nunca salen de tu dispositivo.',
                           style: GDTypography.bodySmall.copyWith(
-                            color: GDColors.primaryDark,
+                            color: context.gd.primaryDark,
                           ),
                         ),
                       ),
@@ -219,7 +220,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           TextSpan(
                             text: 'Inicia sesión',
                             style: GDTypography.bodyMedium.copyWith(
-                              color: GDColors.primary,
+                              color: context.gd.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

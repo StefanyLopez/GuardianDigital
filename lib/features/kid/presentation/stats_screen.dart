@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../providers/profile_provider.dart';
+import '../../../core/theme/theme_extension.dart';
 
 final _wellnessProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final profile = ref.watch(activeProfileProvider);
@@ -40,7 +41,7 @@ class StatsScreen extends ConsumerWidget {
             const Gap(GDSpacing.md),
 
             // Racha y puntuación actual
-            if (profile != null) _buildCurrentCard(profile)
+            if (profile != null) _buildCurrentCard(context,profile)
                 .animate().fadeIn().slideY(begin: -0.2),
 
             const Gap(GDSpacing.lg),
@@ -50,23 +51,23 @@ class StatsScreen extends ConsumerWidget {
             const Gap(GDSpacing.md),
 
             wellnessAsync.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: Padding(
-                  padding: EdgeInsets.all(GDSpacing.xl),
-                  child: CircularProgressIndicator(color: GDColors.primary),
+                  padding: const EdgeInsets.all(GDSpacing.xl),
+                  child: CircularProgressIndicator(color: context.gd.primary),
                 ),
               ),
               error: (_, __) => Text('Error al cargar estadísticas', style: GDTypography.bodyMedium),
               data: (scores) {
-                if (scores.isEmpty) return _buildEmptyStats();
+                if (scores.isEmpty) return _buildEmptyStats(context);
                 return Column(
                   children: [
                     // Gráfico de barras simple
-                    _buildBarChart(scores),
+                    _buildBarChart(context, scores),
                     const Gap(GDSpacing.lg),
                     // Detalle por semana
                     ...scores.asMap().entries.map((e) =>
-                      _buildWeekCard(e.value)
+                      _buildWeekCard(context, e.value)
                           .animate()
                           .fadeIn(delay: Duration(milliseconds: 300 + e.key * 100))
                           .slideX(begin: -0.1),
@@ -83,7 +84,7 @@ class StatsScreen extends ConsumerWidget {
                 .animate().fadeIn(delay: 400.ms),
             const Gap(GDSpacing.md),
 
-            if (profile != null) _buildHabitsGrid(profile)
+            if (profile != null) _buildHabitsGrid(context, profile)
                 .animate().fadeIn(delay: 500.ms),
 
             const Gap(GDSpacing.xxl),
@@ -93,15 +94,15 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCurrentCard(dynamic profile) {
+  Widget _buildCurrentCard(BuildContext context, dynamic profile) {
     final streak = profile.streakDays as int;
     final level = profile.autonomyLevel as int;
     return Container(
       padding: const EdgeInsets.all(GDSpacing.md),
       decoration: BoxDecoration(
-        gradient: GDColors.gradientPrimary,
+        gradient: context.gd.gradientPrimary,
         borderRadius: GDRadius.lgAll,
-        boxShadow: GDShadows.md,
+        boxShadow: context.gd.shadowMd,
       ),
       child: Row(
         children: [
@@ -130,16 +131,16 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBarChart(List<Map<String, dynamic>> scores) {
-    final maxScore = 10.0;
+  Widget _buildBarChart(BuildContext context, List<Map<String, dynamic>> scores) {
+    const maxScore = 10.0;
     return Container(
       height: 160,
       padding: const EdgeInsets.all(GDSpacing.md),
       decoration: BoxDecoration(
-        color: GDColors.surface,
+        color: context.gd.surface,
         borderRadius: GDRadius.lgAll,
-        border: Border.all(color: GDColors.primary.withValues(alpha: 0.1)),
-        boxShadow: GDShadows.sm,
+        border: Border.all(color: context.gd.primary.withValues(alpha: 0.1)),
+        boxShadow: context.gd.shadowSm,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -159,7 +160,7 @@ class StatsScreen extends ConsumerWidget {
                 Text(
                   score.toStringAsFixed(1),
                   style: GDTypography.bodySmall.copyWith(
-                    color: isLatest ? GDColors.primary : GDColors.textTertiary,
+                    color: isLatest ? context.gd.primary : context.gd.textTertiary,
                     fontWeight: isLatest ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
@@ -173,7 +174,7 @@ class StatsScreen extends ConsumerWidget {
                       child: AnimatedContainer(
                         duration: 600.ms,
                         decoration: BoxDecoration(
-                          color: isLatest ? GDColors.primary : GDColors.primaryLight,
+                          color: isLatest ? context.gd.primary : context.gd.primaryLight,
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                         ),
                       ),
@@ -190,7 +191,7 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeekCard(Map<String, dynamic> data) {
+  Widget _buildWeekCard(BuildContext context, Map<String, dynamic> data) {
     final score = (data['score'] as num?)?.toDouble() ?? 0;
     final challengesDone = data['challenges_done'] as int? ?? 0;
     final weekStart = data['week_start'] as String? ?? '';
@@ -205,16 +206,16 @@ class StatsScreen extends ConsumerWidget {
       weekLabel = 'Semana del ${DateFormat('d MMM', 'es').format(date)}';
     }
 
-    final scoreColor = score >= 7 ? GDColors.success : score >= 4 ? GDColors.warning : GDColors.error;
+    final scoreColor = score >= 7 ? context.gd.success : score >= 4 ? context.gd.warning : context.gd.error;
 
     return Container(
       margin: const EdgeInsets.only(bottom: GDSpacing.md),
       padding: const EdgeInsets.all(GDSpacing.md),
       decoration: BoxDecoration(
-        color: GDColors.surface,
+        color: context.gd.surface,
         borderRadius: GDRadius.lgAll,
-        border: Border.all(color: GDColors.primary.withValues(alpha: 0.1)),
-        boxShadow: GDShadows.sm,
+        border: Border.all(color: context.gd.primary.withValues(alpha: 0.1)),
+        boxShadow: context.gd.shadowSm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +258,7 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHabitsGrid(dynamic profile) {
+  Widget _buildHabitsGrid(BuildContext context, dynamic profile) {
     final streak = profile.streakDays as int;
     final level = profile.autonomyLevel as int;
 
@@ -268,7 +269,7 @@ class StatsScreen extends ConsumerWidget {
       {'emoji': '🤝', 'label': 'Autonomía digital', 'value': '${(level / 5 * 100).round()}%', 'good': level >= 2},
     ];
 
-    return GridView.builder(
+    return GridView.builder( 
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -284,10 +285,10 @@ class StatsScreen extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.all(GDSpacing.md),
           decoration: BoxDecoration(
-            color: isGood ? GDColors.successLight : GDColors.surfaceVariant,
+            color: isGood ? context.gd.successLight : context.gd.surfaceVariant,
             borderRadius: GDRadius.lgAll,
             border: Border.all(
-              color: isGood ? GDColors.success.withValues(alpha: 0.3) : Colors.transparent,
+              color: isGood ? context.gd.success.withValues(alpha: 0.3) : Colors.transparent,
             ),
           ),
           child: Column(
@@ -300,7 +301,7 @@ class StatsScreen extends ConsumerWidget {
               Text(
                 h['value'] as String,
                 style: GDTypography.titleLarge.copyWith(
-                  color: isGood ? GDColors.success : GDColors.textSecondary,
+                  color: isGood ? context.gd.success : context.gd.textSecondary,
                 ),
               ),
             ],
@@ -310,11 +311,11 @@ class StatsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyStats() {
+  Widget _buildEmptyStats(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(GDSpacing.xl),
       decoration: BoxDecoration(
-        color: GDColors.surfaceVariant,
+        color: context.gd.surfaceVariant,
         borderRadius: GDRadius.lgAll,
       ),
       child: Column(
@@ -339,8 +340,8 @@ class _StatPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = light ? Colors.white : GDColors.textPrimary;
-    final subColor = light ? Colors.white70 : GDColors.textSecondary;
+    final textColor = light ? Colors.white : context.gd.textPrimary;
+    final subColor = light ? Colors.white70 : context.gd.textSecondary;
     return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Text(emoji, style: const TextStyle(fontSize: 22)),
       const Gap(4),
@@ -361,7 +362,7 @@ class _MiniStat extends StatelessWidget {
       const Gap(4),
       Text('$label: ', style: GDTypography.bodySmall),
       Text(value, style: GDTypography.bodySmall.copyWith(
-        fontWeight: FontWeight.w600, color: GDColors.textPrimary)),
+        fontWeight: FontWeight.w600, color: context.gd.textPrimary)),
     ]);
   }
 }

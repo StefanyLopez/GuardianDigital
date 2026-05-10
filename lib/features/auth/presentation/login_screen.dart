@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
 import '../providers/auth_provider.dart';
+import '../../../core/theme/theme_extension.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -71,9 +72,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      gradient: GDColors.gradientPrimary,
+                      gradient: context.gd.gradientPrimary,
                       shape: BoxShape.circle,
-                      boxShadow: GDShadows.lg,
+                      boxShadow: context.gd.shadowLg,
                     ),
                     child: const Center(
                       child: Text('✨', style: TextStyle(fontSize: 42)),
@@ -96,7 +97,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Text(
                   'Luma te estaba esperando.',
                   style: GDTypography.bodyLarge.copyWith(
-                    color: GDColors.textSecondary,
+                    color: context.gd.textSecondary,
                   ),
                 ).animate().fadeIn(delay: 300.ms),
 
@@ -177,7 +178,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           TextSpan(
                             text: 'Créala aquí',
                             style: GDTypography.bodyMedium.copyWith(
-                              color: GDColors.primary,
+                              color: context.gd.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
