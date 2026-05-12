@@ -444,10 +444,9 @@ class _AgeAvatarPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final avatarEmojis = ['🦁', '🐼', '🦊', '🐬', '🦋', '🌟'];
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(GDSpacing.lg),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('¿Cuántos años tiene?',
@@ -456,7 +455,7 @@ class _AgeAvatarPage extends StatelessWidget {
               .fadeIn()
               .slideY(begin: 0.3),
 
-          const Gap(GDSpacing.xl),
+          const Gap(GDSpacing.md),
 
           Row(
             children: [

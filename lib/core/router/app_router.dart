@@ -10,6 +10,8 @@ import '../../features/kid/presentation/kid_home_screen.dart';
 import '../../features/kid/presentation/chat_screen.dart';
 import '../../features/kid/presentation/achievements_screen.dart';
 import '../../features/kid/presentation/stats_screen.dart';
+import '../../features/kid/presentation/kid_settings_screen.dart';
+import '../../features/kid/presentation/focus_screen.dart';
 import '../../features/guardian/presentation/guardian_home_screen.dart';
 import '../../features/guardian/presentation/profile_detail_screen.dart';
 import '../../features/guardian/presentation/family_settings_screen.dart';
@@ -23,46 +25,43 @@ import '../../features/kid/providers/profile_provider.dart';
 //  RUTAS
 // ─────────────────────────────────────────────
 class AppRoutes {
-  static const splash = '/';
-  static const login = '/login';
-  static const register = '/register';
+  static const splash    = '/';
+  static const login     = '/login';
+  static const register  = '/register';
   static const onboarding = '/onboarding';
 
-  // Kid — profileId va en la URL para no perder estado
-  static String kidHome(String profileId) => '/kid/$profileId';
-  static String chat(String profileId) => '/kid/$profileId/chat';
-  static String achievements(String profileId) => '/kid/$profileId/achievements';
-  static String stats(String profileId) => '/kid/$profileId/stats';
-
-  // Atajos sin profileId (usan el último profileId activo en el shell)
-  static const chatFallback = '/chat';
-  static const achievementsFallback = '/achievements';
-  static const statsFallback = '/stats';
+  // Kid
+  static String kidHome(String profileId)     => '/kid/$profileId';
+  static String chat(String profileId)        => '/kid/$profileId/chat';
+  static String achievements(String profileId)=> '/kid/$profileId/achievements';
+  static String stats(String profileId)       => '/kid/$profileId/stats';
+  static String kidSettings(String profileId) => '/kid/$profileId/settings';
+  static String focus(String profileId)       => '/kid/$profileId/focus';
 
   // Guardian
-  static const guardianHome = '/guardian';
+  static const guardianHome    = '/guardian';
+  static const familySettings  = '/guardian/settings';
+  static const newProfile      = '/guardian/new-profile';
   static String profileDetail(String id) => '/guardian/profile/$id';
-  static const familySettings = '/guardian/settings';
+  static String editProfile(String id)   => '/guardian/edit-profile/$id';
 
   // Demo
   static const demoPanel = '/demo';
-
-  static const newProfile = '/guardian/new-profile';
-  static String editProfile(String id) => '/guardian/edit-profile/$id';
-  
 }
 
 // ─────────────────────────────────────────────
-//  ROUTER PROVIDER — sin build_runner, sin @riverpod
+//  ROUTER PROVIDER
 // ─────────────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  // Escucha cambios de auth para redirigir automáticamente al hacer logout
+  ref.watch(authStateProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
+      final isLoggedIn =
+          Supabase.instance.client.auth.currentSession != null;
       final loc = state.matchedLocation;
       final isOnAuth =
           loc == AppRoutes.login || loc == AppRoutes.register;
@@ -82,20 +81,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // Auth
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (_, __) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.register,
-        builder: (_, __) => const RegisterScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.onboarding,
-        builder: (_, __) => const OnboardingScreen(),
-      ),
+      GoRoute(path: AppRoutes.login,    builder: (_, __) => const LoginScreen()),
+      GoRoute(path: AppRoutes.register, builder: (_, __) => const RegisterScreen()),
+      GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingScreen()),
 
-      // Kid shell — profileId en la URL
+      // ── Kid shell ────────────────────────────────────────────────────────
       ShellRoute(
         builder: (context, state, child) => MainShell(
           profileId: _extractProfileId(state),
@@ -120,12 +110,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: 'stats',
                 builder: (_, state) => const StatsScreen(),
               ),
+              // Settings del menor — protegida por Parental Gate interno
+              GoRoute(
+                path: 'settings',
+                builder: (_, state) => KidSettingsScreen(
+                  profileId: state.pathParameters['profileId']!,
+                ),
+              ),
+              // Pantalla de concentración y mindfulness
+              GoRoute(
+                path: 'focus',
+                builder: (_, state) => FocusScreen(
+                  profileId: state.pathParameters['profileId']!,
+                ),
+              ),
             ],
           ),
         ],
       ),
 
-      // Guardian
+      // ── Guardian ─────────────────────────────────────────────────────────
       GoRoute(
         path: AppRoutes.guardianHome,
         builder: (_, __) => const GuardianHomeScreen(),
@@ -143,7 +147,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'edit-profile/:id',
             builder: (_, state) {
-              // Necesitamos el profile — lo cargamos desde el activeProfileProvider
               final profile = ref.read(activeProfileProvider);
               return ProfileFormScreen(profile: profile);
             },
@@ -162,30 +165,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
-      body: Center(
-        child: Text('Ruta no encontrada: ${state.error}'),
-      ),
+      body: Center(child: Text('Ruta no encontrada: ${state.error}')),
     ),
   );
 });
 
-// Extrae el profileId de la URL actual para pasarlo al shell
 String? _extractProfileId(GoRouterState state) {
-  final uri = state.uri.toString();
-  final match = RegExp(r'/kid/([^/]+)').firstMatch(uri);
+  final match = RegExp(r'/kid/([^/]+)').firstMatch(state.uri.toString());
   return match?.group(1);
 }
 
-// ─────────────────────────────────────────────
-//  SPLASH
-// ─────────────────────────────────────────────
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
-
   @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
-  }
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: CircularProgressIndicator()));
 }

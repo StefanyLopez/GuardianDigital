@@ -15,8 +15,12 @@ class MainShell extends ConsumerWidget {
     if (location.contains('/chat'))         return 1;
     if (location.contains('/achievements')) return 2;
     if (location.contains('/stats'))        return 3;
+    if (location.contains('/focus'))        return 4;
     return 0;
   }
+
+  bool _isDetailRoute(String location) =>
+      location.contains('/settings');
 
   void _onTap(BuildContext context, int index) {
     final pid = profileId ?? '';
@@ -26,6 +30,7 @@ class MainShell extends ConsumerWidget {
       case 1: context.go(AppRoutes.chat(pid));    break;
       case 2: context.go(AppRoutes.achievements(pid)); break;
       case 3: context.go(AppRoutes.stats(pid));   break;
+      case 4: context.go(AppRoutes.focus(pid));   break;
     }
   }
 
@@ -47,7 +52,7 @@ class MainShell extends ConsumerWidget {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: _isDetailRoute(location) ? null : Container(
         decoration: BoxDecoration(
           color: c.bottomNavBackground,
           border: Border(
@@ -81,6 +86,11 @@ class MainShell extends ConsumerWidget {
               icon: Icon(Icons.bar_chart_outlined),
               selectedIcon: Icon(Icons.bar_chart_rounded),
               label: 'Mi semana',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.timer_outlined),
+              selectedIcon: Icon(Icons.timer_rounded),
+              label: 'Concentración',
             ),
           ],
         ),
