@@ -235,6 +235,7 @@ class _LumaCentralCard extends ConsumerWidget {
               borderRadius: GDRadius.fullAll,
             ),
             child: Text('Hablar con Luma →',
+                textAlign: TextAlign.center,
                 style: GDTypography.labelLarge
                     .copyWith(color: Colors.white, fontSize: 15)),
           ),
@@ -404,7 +405,13 @@ class _QuickCard extends StatelessWidget {
         child: Row(children: [
           Text(emoji, style: const TextStyle(fontSize: 28)),
           const Gap(GDSpacing.md),
-          Text(label, style: GDTypography.titleLarge),
+          Expanded(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: GDTypography.titleLarge.copyWith(color: color),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,)),
         ]),
       ),
     );
