@@ -160,14 +160,18 @@ class ProfileNotifier extends StateNotifier<AsyncValue<void>> {
           .from(AppConstants.tableProfiles)
           .delete()
           .eq('id', profileId);
-      // Limpiar el perfil activo si era el que se borró
+
       final active = ref.read(activeProfileProvider);
       if (active?.id == profileId) {
         ref.read(activeProfileProvider.notifier).state = null;
       }
+
+      ref.invalidate(familyProfilesProvider); // ← agregar esto
+
       state = const AsyncValue.data(null);
     } catch (e, st) {
       debugPrint('Error borrando perfil: $e');
+      debugPrint('Stacktrace: $st');
       state = AsyncValue.error(e, st);
     }
   }

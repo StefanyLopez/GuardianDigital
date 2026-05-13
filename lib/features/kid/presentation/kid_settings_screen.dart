@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../providers/profile_provider.dart';
+import '../../../core/router/app_router.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  PARENTAL GATE
@@ -83,31 +85,35 @@ class _ParentalGateDialogState extends State<_ParentalGateDialog> {
     super.dispose();
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Verificación de adulto 🔒'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(widget.message,
-              style: GDTypography.bodyMedium
-                  .copyWith(color: context.gd.textSecondary)),
-          const Gap(GDSpacing.lg),
-          Text('¿Cuánto es $_a + $_b?', style: GDTypography.titleLarge),
-          const Gap(GDSpacing.sm),
-          TextField(
-            controller: _ctrl,
-            keyboardType: TextInputType.number,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: 'Escribe el resultado',
-              errorText: _error,
+      // 1. Usamos Scrollable para que el teclado no rompa el diseño
+      content: SingleChildScrollView( 
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.message,
+                style: GDTypography.bodyMedium
+                    .copyWith(color: context.gd.textSecondary)),
+            const Gap(GDSpacing.lg),
+            Text('¿Cuánto es $_a + $_b?', style: GDTypography.titleLarge),
+            const Gap(GDSpacing.sm),
+            TextField(
+              controller: _ctrl,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Escribe el resultado',
+                errorText: _error,
+              ),
+              // 2. Mejorar la experiencia: que el botón "Done" del teclado verifique
+              onSubmitted: (_) => _verify(), 
             ),
-            onSubmitted: (_) => _verify(),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -214,6 +220,20 @@ class KidSettingsScreen extends ConsumerWidget {
                 onUnlocked: () => _logout(context, ref),
               ),
             ),
+            const Gap(GDSpacing.lg),
+
+            const KidSectionLabel('Zona de peligro'),
+            KidSettingsTile(
+              icon: Icons.delete_forever_rounded,
+              label: 'Eliminar perfil',
+              color: c.error,
+              onTap: () => ParentalGate.show(
+                context,
+                message: 'Para eliminar el perfil, un adulto debe responder la pregunta.',
+                onUnlocked: () => _deleteProfile(context, ref),
+              ),
+            ),
+            
           ],
         ),
       ),
@@ -227,11 +247,55 @@ class KidSettingsScreen extends ConsumerWidget {
     // GoRouter detecta el cambio de sesión y redirige al login
   }
 
+  Future<void> _deleteProfile(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Eliminar perfil?'),
+        content: const Text(
+          'Se borrarán todos los datos, logros y progreso. Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.gd.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Esperar a que el diálogo cierre completamente antes de continuar
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (!context.mounted) return;
+
+    await ref
+        .read(profileNotifierProvider.notifier)
+        .deleteProfile(profileId);
+
+    if (!context.mounted) return;
+
+    ref.read(activeProfileProvider.notifier).state = null;
+    ref.invalidate(familyProfilesProvider);
+
+    context.go(AppRoutes.guardianHome);
+  }
+
   void _showEditName(BuildContext context, WidgetRef ref, String current) {
     final ctrl = TextEditingController(text: current);
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Cambiar nombre'),
         content: TextField(
           controller: ctrl,
@@ -240,7 +304,7 @@ class KidSettingsScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
@@ -251,7 +315,7 @@ class KidSettingsScreen extends ConsumerWidget {
                   .update({'name': name}).eq('id', profileId);
               ref.invalidate(profileByIdProvider(profileId));
               ref.invalidate(familyProfilesProvider);
-              if (context.mounted) Navigator.pop(context);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
             child: const Text('Guardar'),
           ),
@@ -264,7 +328,7 @@ class KidSettingsScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref, String? current) {
     showDialog(
       context: context,
-      builder: (_) => SimpleDialog(
+      builder: (dialogContext) => SimpleDialog(
         title: const Text('Rango de edad'),
         children: ['8-12', '13-17'].map((range) {
           return SimpleDialogOption(
@@ -274,7 +338,7 @@ class KidSettingsScreen extends ConsumerWidget {
                   .update({'age_range': range}).eq('id', profileId);
               ref.invalidate(profileByIdProvider(profileId));
               ref.invalidate(familyProfilesProvider);
-              if (context.mounted) Navigator.pop(context);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
             child: Text(range,
                 style: GDTypography.bodyLarge.copyWith(
@@ -344,3 +408,4 @@ class KidSettingsTile extends StatelessWidget {
     );
   }
 }
+
