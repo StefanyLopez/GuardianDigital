@@ -163,6 +163,134 @@ CREATE POLICY "challenges_public_read" ON challenges FOR SELECT USING (true);
 CREATE POLICY "achievements_public_read" ON achievements FOR SELECT USING (true);
 
 -- ─────────────────────────────────────────────
+-- ÍNDICES DE RENDIMIENTO
+--
+-- El más crítico: idx_profiles_family_id resuelve el subquery IN (...)
+-- que usan TODAS las políticas RLS. Sin él, cada row scan en events,
+-- challenge_progress, achievement_unlocks y wellness_scores ejecuta
+-- un seq scan sobre profiles. Con él, es un index scan O(log n).
+-- ─────────────────────────────────────────────
+
+-- Resuelve el subquery de RLS en todas las tablas secundarias
+CREATE INDEX IF NOT EXISTS idx_profiles_family_id
+  ON profiles(family_id);
+
+-- StatsScreen: filtro por perfil + orden por semana descendente
+CREATE INDEX IF NOT EXISTS idx_wellness_profile_week
+  ON wellness_scores(profile_id, week_start DESC);
+
+-- AchievementService + trigger de wellness: eventos por perfil y fecha
+CREATE INDEX IF NOT EXISTS idx_events_profile_created
+  ON events(profile_id, created_at DESC);
+
+-- Consultas por tipo de evento (session, challenge_complete, night_usage…)
+CREATE INDEX IF NOT EXISTS idx_events_profile_type
+  ON events(profile_id, type);
+
+-- Challenge progress: filtros por perfil y estado ('active', 'completed'…)
+CREATE INDEX IF NOT EXISTS idx_challenge_progress_profile_status
+  ON challenge_progress(profile_id, status);
+
+-- Achievement unlocks: queries WHERE profile_id = X (UNIQUE cubre profile+achievement,
+-- este índice cubre consultas que solo filtran por profile_id)
+CREATE INDEX IF NOT EXISTS idx_achievement_unlocks_profile
+  ON achievement_unlocks(profile_id);
+
+-- ─────────────────────────────────────────────
+-- FUNCIÓN + TRIGGER: recalcular wellness_score
+--
+-- Se ejecuta AFTER INSERT en events. Recalcula automáticamente el
+-- score semanal del perfil afectado usando solo datos de Postgres,
+-- sin consumir Edge Function invocations del plan gratuito.
+-- ─────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION recalculate_wellness_score()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+  v_week_start    DATE;
+  v_sessions      INT;
+  v_challenges    INT;
+  v_night         INT;
+  v_int_triggered INT;
+  v_int_attended  INT;
+  v_int_ignored   INT;
+  v_streak_max    INT;
+  v_score         NUMERIC(3,1);
+BEGIN
+  -- Lunes de la semana ISO del evento insertado
+  v_week_start := date_trunc('week', NEW.created_at)::DATE;
+
+  -- Contar eventos de esta semana para el perfil
+  SELECT
+    COUNT(*) FILTER (WHERE type = 'session'),
+    COUNT(*) FILTER (WHERE type = 'challenge_complete'),
+    COUNT(*) FILTER (WHERE type = 'night_usage'),
+    COUNT(*) FILTER (WHERE type = 'intervention_shown'),
+    COUNT(*) FILTER (WHERE type = 'intervention_attended'),
+    COUNT(*) FILTER (WHERE type = 'intervention_ignored')
+  INTO
+    v_sessions, v_challenges, v_night,
+    v_int_triggered, v_int_attended, v_int_ignored
+  FROM events
+  WHERE profile_id = NEW.profile_id
+    AND created_at >= v_week_start
+    AND created_at <  v_week_start + INTERVAL '7 days';
+
+  -- Racha actual del perfil (snapshot del momento)
+  SELECT COALESCE(streak_days, 0)
+  INTO v_streak_max
+  FROM profiles
+  WHERE id = NEW.profile_id;
+
+  -- Fórmula de score (0–10)
+  -- Actividad base + retos completados - penalizaciones + bonus racha
+  v_score := LEAST(10.0,
+    (v_sessions      * 0.5 )   -- actividad semanal
+    + (v_challenges  * 1.5 )   -- retos completados
+    - (v_night       * 1.0 )   -- penaliza uso nocturno
+    + (v_int_attended * 0.5)   -- intervenciones atendidas
+    - (v_int_ignored  * 0.25)  -- ignoradas restan menos
+    + LEAST(v_streak_max * 0.1, 2.0)  -- bonus racha, cap 2 puntos
+  );
+  v_score := GREATEST(0.0, v_score);
+
+  -- Upsert: crea la fila si no existe, actualiza si ya existe
+  INSERT INTO wellness_scores (
+    profile_id,
+    week_start,
+    score,
+    challenges_done,
+    streak_max,
+    interventions
+  ) VALUES (
+    NEW.profile_id,
+    v_week_start,
+    v_score,
+    v_challenges,
+    v_streak_max,
+    jsonb_build_object(
+      'triggered', v_int_triggered,
+      'attended',  v_int_attended,
+      'ignored',   v_int_ignored
+    )
+  )
+  ON CONFLICT (profile_id, week_start) DO UPDATE SET
+    score           = EXCLUDED.score,
+    challenges_done = EXCLUDED.challenges_done,
+    streak_max      = EXCLUDED.streak_max,
+    interventions   = EXCLUDED.interventions;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Trigger: se dispara después de cada INSERT en events
+CREATE OR REPLACE TRIGGER trg_wellness_on_event
+  AFTER INSERT ON events
+  FOR EACH ROW
+  EXECUTE FUNCTION recalculate_wellness_score();
+
+-- ─────────────────────────────────────────────
 -- DATOS SEMILLA — Retos iniciales
 -- ─────────────────────────────────────────────
 INSERT INTO challenges (title, description, age_range, duration, points, category) VALUES

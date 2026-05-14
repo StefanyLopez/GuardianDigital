@@ -37,22 +37,26 @@ class AchievementService {
           .map((e) => e['achievement_id'] as String)
           .toSet();
 
-      // Evaluar cada condición
+      // Evaluar cada condición y acumular las que deben desbloquearse
+      final toInsert = <Map<String, String>>[];
       for (final achievement in all as List) {
         final id        = achievement['id'] as String;
         final condition = achievement['condition'] as String;
 
         if (existingIds.contains(id)) continue;
 
-        final shouldUnlock = _evaluateCondition(condition, profile);
-
-        if (shouldUnlock) {
-          await _client
-              .from(AppConstants.tableAchievementUnlocks)
-              .upsert({'profile_id': profile.id, 'achievement_id': id});
+        if (_evaluateCondition(condition, profile)) {
+          toInsert.add({'profile_id': profile.id, 'achievement_id': id});
           newlyUnlocked.add(id);
           debugPrint('🏅 Insignia desbloqueada: $condition (${profile.name})');
         }
+      }
+
+      // Un solo viaje al servidor para todos los logros nuevos
+      if (toInsert.isNotEmpty) {
+        await _client
+            .from(AppConstants.tableAchievementUnlocks)
+            .upsert(toInsert);
       }
     } catch (e) {
       debugPrint('Error evaluando insignias: $e');

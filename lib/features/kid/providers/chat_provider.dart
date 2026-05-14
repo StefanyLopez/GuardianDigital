@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/database/local_database.dart';
 import '../models/chat_message.dart';
+import '../models/profile_model.dart';
 import '../services/groq_service.dart';
 import 'profile_provider.dart';
 
@@ -57,7 +58,16 @@ final chatNotifierProvider = StateNotifierProvider<ChatNotifier, ChatState>(
 class ChatNotifier extends StateNotifier<ChatState> {
   ChatNotifier(this.ref) : super(const ChatState());
   final Ref ref;
-  get _profile => ref.read(activeProfileProvider);
+
+  // Lee el perfil activo de forma segura.
+  // activeProfileIdProvider es StateProvider (nunca se destruye), así que
+  // el ID siempre está disponible aunque activeProfileProvider (autoDispose)
+  // se haya dispuesto mientras el usuario navegaba fuera del chat.
+  ProfileModel? get _profile {
+    final profileId = ref.read(activeProfileIdProvider);
+    if (profileId == null) return null;
+    return ref.read(profileByIdProvider(profileId)).valueOrNull;
+  }
 
   Future<void> initialize({String triggerType = 'normal'}) async {
     final profile = _profile;
