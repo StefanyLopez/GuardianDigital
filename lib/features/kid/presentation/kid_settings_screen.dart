@@ -242,7 +242,7 @@ class KidSettingsScreen extends ConsumerWidget {
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
     ref.invalidate(familyProfilesProvider);
-    ref.read(activeProfileProvider.notifier).state = null;
+    ref.read(activeProfileIdProvider.notifier).state = null;
     await Supabase.instance.client.auth.signOut();
     // GoRouter detecta el cambio de sesión y redirige al login
   }
@@ -285,7 +285,7 @@ class KidSettingsScreen extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    ref.read(activeProfileProvider.notifier).state = null;
+    ref.read(activeProfileIdProvider.notifier).state = null;
     ref.invalidate(familyProfilesProvider);
 
     context.go(AppRoutes.guardianHome);

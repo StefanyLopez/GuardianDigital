@@ -20,6 +20,9 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../shell/main_shell.dart';
 import '../../features/guardian/presentation/profile_form_screen.dart';
 import '../../features/kid/providers/profile_provider.dart';
+import '../theme/app_theme.dart';
+import '../theme/theme_extension.dart';
+import '../../main.dart' show supabaseReady;
 
 // ─────────────────────────────────────────────
 //  RUTAS
@@ -50,16 +53,38 @@ class AppRoutes {
 }
 
 // ─────────────────────────────────────────────
+//  APP READY PROVIDER
+//  Se resuelve cuando Supabase.initialize() y NotificationService
+//  terminan. Mientras está en AsyncLoading, el redirect mantiene
+//  al usuario en el splash (cold start de Supabase free tier).
+// ─────────────────────────────────────────────
+final appReadyProvider = FutureProvider<bool>((ref) async {
+  await supabaseReady;
+  return true;
+});
+
+// ─────────────────────────────────────────────
 //  ROUTER PROVIDER
 // ─────────────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
-  // Escucha cambios de auth para redirigir automáticamente al hacer logout
-  ref.watch(authStateProvider);
+  // Observa solo si el usuario está logueado o no (true/false).
+  // isLoggedInProvider usa .distinct() y solo emite cuando el valor
+  // cambia de verdad — el token refresh silencioso (cada hora) NO
+  // dispara la recreación del GoRouter ni el "flash" de navegación.
+  ref.watch(isLoggedInProvider);
+  // Escucha el estado de inicialización para salir del splash cuando esté listo
+  ref.watch(appReadyProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: false,
     redirect: (context, state) {
+      // ── 1. Esperar inicialización — quedarse en splash mientras carga
+      final appReady = ref.read(appReadyProvider);
+      if (appReady.isLoading) return null;
+
+      // ── 2. Inicialización completa — leer sesión (síncrono, ya restaurada
+      //       desde flutter_secure_storage por Supabase.initialize)
       final isLoggedIn =
           Supabase.instance.client.auth.currentSession != null;
       final loc = state.matchedLocation;
@@ -147,7 +172,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'edit-profile/:id',
             builder: (_, state) {
-              final profile = ref.read(activeProfileProvider);
+              final profileId = state.pathParameters['id']!;
+              // Lee el valor cacheado del FutureProvider (disponible porque
+              // guardian_home_screen ya seteó activeProfileIdProvider antes de navegar)
+              final profile =
+                  ref.read(profileByIdProvider(profileId)).valueOrNull;
               return ProfileFormScreen(profile: profile);
             },
           ),
@@ -175,9 +204,69 @@ String? _extractProfileId(GoRouterState state) {
   return match?.group(1);
 }
 
-class _SplashScreen extends StatelessWidget {
+// ─────────────────────────────────────────────
+//  SPLASH SCREEN
+//  Visible durante el cold start de Supabase (free tier puede tardar
+//  5-15s). Muestra branding en lugar de un spinner sin contexto.
+//  appReadyProvider re-evalúa appRouterProvider cuando se resuelve,
+//  lo que dispara el redirect y sale del splash automáticamente.
+// ─────────────────────────────────────────────
+class _SplashScreen extends ConsumerWidget {
   const _SplashScreen();
+
   @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: CircularProgressIndicator()));
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Logo / ícono de la app ──────────────────────────────
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: Icon(
+                  Icons.shield_rounded,
+                  size: 56,
+                  color: context.gd.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── Nombre de la app ────────────────────────────────────
+              Text(
+                'Guardian Digital',
+                style: GDTypography.headlineLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Bienestar digital para toda la familia',
+                style: GDTypography.bodyMedium.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(height: 64),
+
+              // ── Indicador de carga ──────────────────────────────────
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: context.gd.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

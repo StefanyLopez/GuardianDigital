@@ -6,52 +6,75 @@ import '../../../core/constants/app_constants.dart';
 import '../models/profile_model.dart';
 
 // ─────────────────────────────────────────────
-//  PERFIL ACTIVO (estado global)
+//  PERFIL ACTIVO — arquitectura reactiva
+//
+//  Solo se escribe el ID (liviano). El perfil completo se DERIVA
+//  automáticamente del ID sin ningún side-effect en providers.
+//
+//  Escritura:  ref.read(activeProfileIdProvider.notifier).state = id;
+//  Lectura:    ref.watch(activeProfileProvider) → ProfileModel?
 // ─────────────────────────────────────────────
-final activeProfileProvider = StateProvider<ProfileModel?>((ref) => null);
 
-// ─────────────────────────────────────────────
-//  LISTA DE PERFILES DE LA FAMILIA
-// ─────────────────────────────────────────────
-final familyProfilesProvider = StreamProvider<List<ProfileModel>>((ref) {
-  final client = Supabase.instance.client;
-  final userId = client.auth.currentUser?.id;
-  if (userId == null) return Stream.value([]);
+/// ID del perfil actualmente seleccionado. Es la única fuente de verdad
+/// que se escribe desde fuera. Nunca contiene el objeto completo.
+final activeProfileIdProvider = StateProvider<String?>((ref) => null);
 
-  // Supabase Realtime — escucha cambios en la tabla profiles
-  return client
-      .from(AppConstants.tableProfiles)
-      .stream(primaryKey: ['id'])
-      .eq('family_id', userId)
-      .order('created_at')
-      .map((data) => data.map((e) => ProfileModel.fromJson(e)).toList());
+/// Perfil activo derivado reactivamente del ID. Lee de [profileByIdProvider]
+/// sin ningún side-effect. Expone [ProfileModel?] para que las pantallas
+/// existentes no necesiten cambiar su API de lectura.
+final activeProfileProvider = Provider.autoDispose<ProfileModel?>((ref) {
+  final profileId = ref.watch(activeProfileIdProvider);
+  if (profileId == null) return null;
+  // Lee el valor cacheado del FutureProvider sin causar rebuilds de async
+  return ref.watch(profileByIdProvider(profileId)).valueOrNull;
 });
 
 // ─────────────────────────────────────────────
-//  PERFIL POR ID — sin build_runner
-//  Family de providers parametrizados manualmente
+//  LISTA DE PERFILES DE LA FAMILIA
+//
+//  FutureProvider.autoDispose: se destruye cuando GuardianHomeScreen
+//  no está en pantalla, liberando recursos. Se re-fetcha con una query
+//  .select() normal en lugar de un WebSocket Realtime permanente.
+//
+//  Invalidación: los métodos de ProfileNotifier que modifican datos
+//  llaman ref.invalidate(familyProfilesProvider) para forzar re-fetch.
 // ─────────────────────────────────────────────
-final profileByIdProvider = FutureProvider.family<ProfileModel?, String>(
-  (ref, profileId) async {
-    // Escucha cambios en la lista general y se refresca automáticamente
-    ref.watch(familyProfilesProvider);
-    
-    final client = Supabase.instance.client;
-    try {
-      final data = await client
-          .from(AppConstants.tableProfiles)
-          .select()
-          .eq('id', profileId)
-          .single();
-      final profile = ProfileModel.fromJson(data);
-      ref.read(activeProfileProvider.notifier).state = profile;
-      return profile;
-    } catch (e) {
-      debugPrint('ERROR en profileById($profileId): $e');
-      return null;
-    }
-  },
-);
+final familyProfilesProvider =
+    FutureProvider.autoDispose<List<ProfileModel>>((ref) async {
+  final client = Supabase.instance.client;
+  final userId = client.auth.currentUser?.id;
+  if (userId == null) return [];
+
+  final data = await client
+      .from(AppConstants.tableProfiles)
+      .select()
+      .eq('family_id', userId)
+      .order('created_at');
+
+  return (data as List).map((e) => ProfileModel.fromJson(e)).toList();
+});
+
+// ─────────────────────────────────────────────
+//  PERFIL POR ID — provider puro, sin side-effects
+//  Solo fetcha y retorna. No escribe en ningún otro provider.
+//  Invalidación: ProfileNotifier llama ref.invalidate(profileByIdProvider(id))
+//  después de updateProfile, updateStreak, updateAutonomyLevel.
+// ─────────────────────────────────────────────
+final profileByIdProvider =
+    FutureProvider.family<ProfileModel?, String>((ref, profileId) async {
+  final client = Supabase.instance.client;
+  try {
+    final data = await client
+        .from(AppConstants.tableProfiles)
+        .select()
+        .eq('id', profileId)
+        .single();
+    return ProfileModel.fromJson(data);
+  } catch (e) {
+    debugPrint('ERROR en profileById($profileId): $e');
+    return null;
+  }
+});
 
 // ─────────────────────────────────────────────
 //  PROFILE NOTIFIER — CRUD
@@ -89,7 +112,7 @@ class ProfileNotifier extends StateNotifier<AsyncValue<void>> {
           .select()
           .single();
       final profile = ProfileModel.fromJson(data);
-      ref.read(activeProfileProvider.notifier).state = profile;
+      ref.read(activeProfileIdProvider.notifier).state = profile.id;
       ref.invalidate(familyProfilesProvider);
       state = const AsyncValue.data(null);
       return profile;
@@ -109,7 +132,9 @@ class ProfileNotifier extends StateNotifier<AsyncValue<void>> {
             'last_active': DateTime.now().toIso8601String(),
           })
           .eq('id', profileId);
+      // Invalida tanto la lista como el perfil individual para refrescar la UI
       ref.invalidate(familyProfilesProvider);
+      ref.invalidate(profileByIdProvider(profileId));
     } catch (e) {
       debugPrint('Error actualizando racha: $e');
     }
@@ -122,6 +147,7 @@ class ProfileNotifier extends StateNotifier<AsyncValue<void>> {
           .update({'autonomy_level': level})
           .eq('id', profileId);
       ref.invalidate(familyProfilesProvider);
+      ref.invalidate(profileByIdProvider(profileId));
     } catch (e) {
       debugPrint('Error actualizando autonomía: $e');
     }
@@ -145,8 +171,10 @@ class ProfileNotifier extends StateNotifier<AsyncValue<void>> {
             'goals': goals,
           })
           .eq('id', profileId);
+      // Invalida lista y perfil individual para refrescar GuardianHome y KidHome
+      ref.invalidate(familyProfilesProvider);
+      ref.invalidate(profileByIdProvider(profileId));
       state = const AsyncValue.data(null);
-      // El StreamProvider se actualiza solo
     } catch (e, st) {
       debugPrint('Error actualizando perfil: $e');
       state = AsyncValue.error(e, st);
@@ -161,9 +189,9 @@ class ProfileNotifier extends StateNotifier<AsyncValue<void>> {
           .delete()
           .eq('id', profileId);
 
-      final active = ref.read(activeProfileProvider);
-      if (active?.id == profileId) {
-        ref.read(activeProfileProvider.notifier).state = null;
+      final activeId = ref.read(activeProfileIdProvider);
+      if (activeId == profileId) {
+        ref.read(activeProfileIdProvider.notifier).state = null;
       }
 
       ref.invalidate(familyProfilesProvider); // ← agregar esto

@@ -40,7 +40,7 @@ class GuardianHomeScreen extends ConsumerWidget {
     // 1 — Limpiar providers
     ref.invalidate(familyProfilesProvider);
     ref.invalidate(chatNotifierProvider);
-    ref.read(activeProfileProvider.notifier).state = null;
+    ref.read(activeProfileIdProvider.notifier).state = null;
 
     // 2 — Cerrar sesión en Supabase
     await Supabase.instance.client.auth.signOut();
@@ -102,8 +102,8 @@ class GuardianHomeScreen extends ConsumerWidget {
               if (profiles.isNotEmpty)
                 OutlinedButton.icon(
                   onPressed: () {
-                    ref.read(activeProfileProvider.notifier).state =
-                        profiles.first;
+                    ref.read(activeProfileIdProvider.notifier).state =
+                        profiles.first.id;
                     context.go(AppRoutes.kidHome(profiles.first.id));
                   },
                   icon: const Icon(Icons.swap_horiz_rounded),
@@ -231,7 +231,7 @@ class _ProfileCard extends ConsumerWidget {
               icon: Icon(Icons.edit_outlined,
                   size: 18, color: context.gd.textTertiary),
               onPressed: () {
-                ref.read(activeProfileProvider.notifier).state = profile;
+                ref.read(activeProfileIdProvider.notifier).state = profile.id;
                 context.push(AppRoutes.editProfile(profile.id));
               },
             ),
